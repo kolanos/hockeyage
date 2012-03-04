@@ -1,5 +1,6 @@
 from hockeyage.game.clock import Clock
 from hockeyage.game.event import Event
+from hockeyage.game.play import Play
 from hockeyage.game.team import Team
 
 PERIOD_LENGTH = 1200
@@ -7,6 +8,7 @@ OVERTIME_LENGTH = 300
 
 class Match(object):
     def __init__(self):
+        self.play = Play()
         self.start_game()
     
     def start_game(self):
@@ -17,11 +19,12 @@ class Match(object):
         self.start_period()
     
     def start_period(self):
+        self.play = Play()
         self.period += 1
         self.clock = Clock(PERIOD_LENGTH, OVERTIME_LENGTH, self.period)
         while self.clock.running():
             self.next_event()
-    
+
     def end_period(self):
         if self.period < 3:
             self.start_period()
@@ -39,7 +42,8 @@ class Match(object):
         else:
             self.home_team.lineup.lines.line_change()
             self.road_team.lineup.lines.line_change()
-            self.event.next_event(self.period, self.clock)
+
+            self.event.next_event(self.period, self.clock, self.play())
     
     def end_game(self):
         self.event.show_events()

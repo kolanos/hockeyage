@@ -2,6 +2,7 @@ from hockeyage.util import probability
 
 class Play(object):
     last_play = None
+
     def __init__(self):
         self.next_play = probability.weighted_choice_compile([('shot', 22),
                                                               ('stop', 22),
