@@ -1,0 +1,80 @@
+END
+    START
+GOAL
+    FACE
+FACE
+    BLOCK
+    GIVE
+    GOAL
+    HIT
+    MISS
+    PENALTY
+    SHOT
+    STOP
+    TAKE
+BLOCK
+    BLOCK
+    GIVE
+    GOAL
+    HIT
+    MISS
+    PENALTY
+    SHOT
+    STOP
+    TAKE
+GIVE
+    BLOCK
+    GIVE
+    GOAL
+    HIT
+    MISS
+    PENALTY
+    SHOT
+    STOP
+    TAKE
+HIT
+    BLOCK
+    GIVE
+    GOAL
+    HIT
+    MISS
+    PENALTY
+    SHOT
+    STOP
+    TAKE
+MISS
+    BLOCK
+    GIVE
+    GOAL
+    HIT
+    MISS
+    PENALTY
+    SHOT
+    STOP
+    TAKE
+PENALTY
+    FACE
+SHOT
+    BLOCK
+    GIVE
+    GOAL
+    HIT
+    MISS
+    PENALTY
+    SHOT
+    STOP
+    TAKE
+START
+    FACE
+STOP
+    FACE
+TAKE
+    BLOCK
+    GIVE
+    GOAL
+    HIT
+    MISS
+    PENALTY
+    SHOT
+    STOP
+    TAKE
