@@ -4,8 +4,8 @@ class Play(object):
     last_play = None
 
     def __init__(self):
-        self.next_play = probability.weighted_choice_compile([('shot', 22),
-                                                              ('stop', 22),
+        self.next_play = probability.weighted_choice_compile([('shot', 24),
+                                                              ('stop', 20),
                                                               ('hit', 14),
                                                               ('penalty', 10),
                                                               ('block', 10),
@@ -16,7 +16,7 @@ class Play(object):
 
     def __call__(self):
         if self.last_play is None:
-           self.last_play = 'start'
+           self.last_play = 'face'
         else:
             self.last_play = getattr(self, self.last_play)()
         return self.last_play

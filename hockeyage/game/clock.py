@@ -3,6 +3,7 @@ import random
 class Clock(object):
     def __init__(self, period_length, overtime_length, period):
         self.clock = 0
+        self.last_tick = 0
         self.time_left = period_length if period < 4 else overtime_length 
     
     def running(self):
@@ -11,7 +12,11 @@ class Clock(object):
     def tick(self):
         self.last_tick = self.clock
         self.clock += random.randint(1, 25)
-    
+
+    def end(self):
+        self.last_tick = self.clock
+        self.clock = self.time_left
+
     @property
     def elapsed(self):
         seconds = self.clock

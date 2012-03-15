@@ -19,13 +19,17 @@ class Match(object):
         self.start_period()
     
     def start_period(self):
-        self.play = Play()
         self.period += 1
         self.clock = Clock(PERIOD_LENGTH, OVERTIME_LENGTH, self.period)
+        self.play = Play()
+        self.event.next_event(self.period, self.clock, 'start')
+        self.event.next_event(self.period, self.clock, self.play())
         while self.clock.running():
             self.next_event()
 
     def end_period(self):
+        self.clock.end()
+        self.event.next_event(self.period, self.clock, 'end')
         if self.period < 3:
             self.start_period()
         else:

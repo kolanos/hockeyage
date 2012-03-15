@@ -28,4 +28,4 @@ class Event(object):
                 out = colors.red(out, bold=True)
             print(out)
 
-        print('goal; %(goal)d shot: %(shot)d block: %(block)d miss: %(miss)d hit: %(hit)d' % self.plays)
+        print('shot: %(shot)d face: %(face)d hit: %(hit)d penalty: %(penalty)d block: %(block)d miss: %(miss)d give: %(give)d take: %(take)d goal; %(goal)d' % self.plays)
