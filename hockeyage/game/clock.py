@@ -1,42 +1,37 @@
 import random
 
+def format_time(seconds):
+    minutes = seconds / 60
+    seconds = seconds % 60
+    return "%02d:%02d" % (minutes, seconds)
+
 class Clock(object):
+    MAX_TICK_INTERVAL = 25
+
     def __init__(self, period_length, overtime_length, period):
         self.clock = 0
         self.last_tick = 0
-        self.time_left = period_length if period < 4 else overtime_length 
+        self.total_time = period_length if period < 4 else overtime_length
     
     def running(self):
-        return self.clock < self.time_left
+        return self.clock < self.total_time
     
     def tick(self):
         self.last_tick = self.clock
-        self.clock += random.randint(1, 25)
+        self.clock += random.randint(1, self.MAX_TICK_INTERVAL)
 
     def end(self):
         self.last_tick = self.clock
-        self.clock = self.time_left
+        self.clock = self.total_time
 
     @property
     def elapsed(self):
-        seconds = self.clock
-        minutes = seconds / 60
-        seconds -= 60*minutes
-        return "%02d:%02d" % (minutes, seconds)
+        return format_time(self.clock)
 
     @property
     def remaining(self):
-        seconds = self.time_left - self.clock
-        minutes = seconds / 60
-        seconds -= 60*minutes
-        return "%02d:%02d" % (minutes, seconds)
+        return format_time(self.total_time - self.clock)
 
     @property
     def since_last_tick(self):
-        return min(self.clock, self.time_left) - self.last_tick
-
-    @staticmethod
-    def format_time(seconds):
-        minutes = seconds / 60
-        seconds -= 60*minutes
-        return "%02d:%02d" % (minutes, seconds)
+        return min(self.clock, self.total_time) - self.last_tick

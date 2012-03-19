@@ -1,5 +1,4 @@
 import random
-
 from hockeyage.util import dotdict, probability
 
 class Team(object):
@@ -79,6 +78,21 @@ class Lines(object):
         for defense in self.current_line['defense']:
             defense['toi'] = defense['toi'] + toi
         self.current_goalie['toi'] = self.current_goalie['toi'] + toi
+
+    @property
+    def average_rating(self):
+        ratings = [p['overall'] for p in self.current_line['forward'] + self.current_line['defense']]
+        return sum(ratings) / len(ratings)
+
+    @property
+    def forward_rating(self):
+        ratings = [p.overall for p in self.current_line['forward']]
+        return sum(ratings) / len(ratings)
+
+    @property
+    def defense_rating(self):
+        ratings = [p.overall for p in self.current_line['defense']]
+        return sum(ratings) / len(ratings)
 
 class Player(dotdict):
     pass
