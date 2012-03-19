@@ -55,7 +55,8 @@ class Match(object):
             self.home.lineup.lines.line_change()
             self.road.lineup.lines.line_change()
             
-            advance = probability.weighted_choice([(-1, self.road.lineup.lines.average_rating), (1, self.home.lineup.lines.average_rating)])
+            advance = probability.weighted_choice([(-1, self.road.lineup.lines.average_rating),
+                                                  (1, self.home.lineup.lines.average_rating)])
             self.zone += advance
             if self.zone > 0:
                 self.zone = 1

@@ -86,12 +86,12 @@ class Lines(object):
 
     @property
     def forward_rating(self):
-        ratings = [p.overall for p in self.current_line['forward']]
+        ratings = [p['overall'] for p in self.current_line['forward']]
         return sum(ratings) / len(ratings)
 
     @property
     def defense_rating(self):
-        ratings = [p.overall for p in self.current_line['defense']]
+        ratings = [p['overall'] for p in self.current_line['defense']]
         return sum(ratings) / len(ratings)
 
 class Player(dotdict):
