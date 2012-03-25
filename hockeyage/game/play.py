@@ -1,5 +1,6 @@
 from hockeyage.util import probability
 
+
 class Play(object):
     last_play = None
 
@@ -16,7 +17,7 @@ class Play(object):
 
     def __call__(self):
         if self.last_play is None:
-           self.last_play = 'face'
+            self.last_play = 'face'
         else:
             self.last_play = getattr(self, self.last_play)()
         return self.last_play

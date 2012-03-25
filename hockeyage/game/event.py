@@ -1,5 +1,5 @@
-from hockeyage.game.match import *
 from hockeyage.util import colors
+
 
 class Event(object):
     def __init__(self):
@@ -7,7 +7,7 @@ class Event(object):
         self.events = []
         self.plays = {}
         self.zones = {}
-    
+
     def add(self, period, clock, play, zone):
         self.event += 1
 
@@ -28,7 +28,7 @@ class Event(object):
                             'since': clock.since_last_tick,
                             'play': play,
                             'zone': zone})
-    
+
     def show(self):
         print(colors.white('#\tPERIOD\tELAPSED\tREMAINING\tPLAY\tZONE', True))
         for e in self.events:

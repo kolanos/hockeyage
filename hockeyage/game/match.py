@@ -7,12 +7,14 @@ from hockeyage.util import probability
 PERIOD_LENGTH = 1200
 OVERTIME_LENGTH = 300
 
+
 def zone(z):
     if z > 0:
         return 'HOME'
     if z < 0:
         return 'ROAD'
     return 'NEUTRAL'
+
 
 class Match(object):
     def __init__(self):
@@ -25,14 +27,14 @@ class Match(object):
         self.period = 0
         self.zone = 0
         self.start_period()
-    
+
     def start_period(self):
         self.period += 1
-        self.clock = Clock(PERIOD_LENGTH, OVERTIME_LENGTH, self.period)
+        self.clock = Clock(self.period, PERIOD_LENGTH, OVERTIME_LENGTH)
         self.play = Play()
         self.event.add(self.period, self.clock, 'start', zone(self.zone))
         self.event.add(self.period, self.clock, self.play(), zone(self.zone))
-        while self.clock.running():
+        while self.clock.running:
             self.next_event()
 
     def end_period(self):
@@ -42,31 +44,31 @@ class Match(object):
             self.start_period()
         else:
             self.end_game()
-            
+
     def next_event(self):
         self.clock.tick()
 
         self.home.lineup.lines.add_toi(self.clock.since_last_tick)
         self.road.lineup.lines.add_toi(self.clock.since_last_tick)
 
-        if not self.clock.running():
+        if not self.clock.running:
             self.end_period()
         else:
             self.home.lineup.lines.line_change()
             self.road.lineup.lines.line_change()
-            
-            advance = probability.weighted_choice([(-1, self.road.lineup.lines.average_rating),
-                                                  (1, self.home.lineup.lines.average_rating)])
+
+            advance_choices = [(-1, self.road.lineup.lines.average_rating),
+                               (1, self.home.lineup.lines.average_rating)]
+            advance = probability.weighted_choice(advance_choices)
             self.zone += advance
             if self.zone > 0:
                 self.zone = 1
             elif self.zone < 0:
                 self.zone = -1
 
-            self.event.add(self.period, self.clock, self.play(), zone(self.zone))
-    
+            self.event.add(self.period, self.clock, self.play(),
+                           zone(self.zone))
+
     def end_game(self):
         self.event.show()
         #exit()
-
-

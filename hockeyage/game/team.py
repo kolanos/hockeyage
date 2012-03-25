@@ -1,11 +1,13 @@
 import random
 from hockeyage.util import dotdict, probability
 
+
 class Team(object):
     def __init__(self, name, abbreviation):
         self.name = name
         self.abbreviation = abbreviation
         self.lineup = Lineup()
+
 
 class Lineup(object):
     def __init__(self, lineup=None):
@@ -24,14 +26,15 @@ class Lineup(object):
                     'LW4', 'C4', 'RW4']:
             self.lineup[pos] = Player(overall=random.randrange(50, 99), toi=0)
 
+
 class Lines(object):
-    def __init__(self, lineup, line_preference=None):
+    def __init__(self, lineup, preference=None):
         self.lineup = lineup
 
-        if line_preference:
-            self.line_preference = line_preference
+        if preference:
+            self.preference = preference
         else:
-            self.line_preference = {'forward': [(0, 40), (1, 30), (2, 20), (3, 10)],
+            self.preference = {'forward': [(0, 40), (1, 30), (2, 20), (3, 10)],
                                     'defense': [(0, 40), (1, 35), (2, 25)]}
 
         self.lw = self.get_by_pos('LW')
@@ -58,10 +61,10 @@ class Lines(object):
         self.current_goalie = self.gk[selection]
 
     def line_change(self):
-        self.forward_line = probability.weighted_choice(self.line_preference['forward'])
-        self.defense_line = probability.weighted_choice(self.line_preference['defense'])
-        self.current_line = {'forward': self.lines['forward'][self.forward_line],
-                             'defense': self.lines['defense'][self.defense_line]}
+        self.forward = probability.weighted_choice(self.preference['forward'])
+        self.defense = probability.weighted_choice(self.preference['defense'])
+        self.current_line = {'forward': self.lines['forward'][self.forward],
+                             'defense': self.lines['defense'][self.defense]}
 
     def get_by_pos(self, pos, sort=True):
         players = []
@@ -75,13 +78,15 @@ class Lines(object):
     def add_toi(self, toi):
         for forward in self.current_line['forward']:
             forward['toi'] = forward['toi'] + toi
+
         for defense in self.current_line['defense']:
             defense['toi'] = defense['toi'] + toi
         self.current_goalie['toi'] = self.current_goalie['toi'] + toi
 
     @property
     def average_rating(self):
-        ratings = [p['overall'] for p in self.current_line['forward'] + self.current_line['defense']]
+        ratings = [p['overall'] for p in self.current_line['forward'] +
+                                         self.current_line['defense']]
         return sum(ratings) / len(ratings)
 
     @property
@@ -93,6 +98,7 @@ class Lines(object):
     def defense_rating(self):
         ratings = [p['overall'] for p in self.current_line['defense']]
         return sum(ratings) / len(ratings)
+
 
 class Player(dotdict):
     pass
