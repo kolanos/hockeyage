@@ -17,7 +17,9 @@ def zone(z):
 
 
 class Match(object):
-    def __init__(self):
+    def __init__(self, show_events=False):
+        self.show_events = show_events
+
         self.event = Event()
         self.play = Play()
 
@@ -70,5 +72,5 @@ class Match(object):
                            zone(self.zone))
 
     def end_game(self):
-        self.event.show()
-        #exit()
+        if self.show_events:
+            self.event.show()

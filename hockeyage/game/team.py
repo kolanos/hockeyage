@@ -35,7 +35,7 @@ class Lines(object):
             self.preference = preference
         else:
             self.preference = {'forward': [(0, 40), (1, 30), (2, 20), (3, 10)],
-                                    'defense': [(0, 40), (1, 35), (2, 25)]}
+                               'defense': [(0, 40), (1, 35), (2, 25)]}
 
         self.lw = self.get_by_pos('LW')
         self.c = self.get_by_pos('C')
