@@ -66,13 +66,13 @@ class Lines(object):
         self.current_line = {'forward': self.lines['forward'][self.forward],
                              'defense': self.lines['defense'][self.defense]}
 
-    def get_by_pos(self, pos, sort=True):
+    def get_by_pos(self, pos, sort=True, sort_by='overall'):
         players = []
         for k, v in self.lineup.items():
             if k.startswith(pos):
                 players.append(v)
         if sort:
-            players = sorted(players, key=lambda k: k['overall'], reverse=True)
+            players = sorted(players, key=lambda k: k[sort_by], reverse=True)
         return players
 
     def add_toi(self, toi):
