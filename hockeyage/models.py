@@ -2,23 +2,24 @@ from django.db import models
 
 
 class NHLTeam(models.Model):
-    city = models.CharField(max_length=50)
-    name = models.CharField(max_length=50)
-    abbr = models.CharField(max_length=3)
+    city = models.CharField(max_length=32)
+    name = models.CharField(max_length=32)
+    abbreviation = models.CharField(max_length=3)
 
     def __unicode__(self):
         return '%s %s' % (self.city, self.name)
 
     class Meta:
-        ordering = ('city', 'name')
+        db_table = 'nhl_teams'
+        ordering = ['city', 'name']
 
 
 class NHLSchedule(models.Model):
-    name = models.CharField(max_length=50)
-    type = models.CharField(max_length=10, choices=(('regular', 'Regular'),
+    name = models.CharField(max_length=6)
+    type = models.CharField(max_length=7, choices=(('regular', 'Regular'),
                                                     ('pre', 'Preseason')))
-    day = models.PositiveSmallIntegerField()
-    game = models.PositiveSmallIntegerField()
+    day = models.PositiveSmallIntegerField(max_length=3)
+    game = models.PositiveSmallIntegerField(max_length=2)
     date = models.DateField()
     home = models.ForeignKey(NHLTeam, related_name='home_id')
     road = models.ForeignKey(NHLTeam, related_name='road_id')
@@ -28,14 +29,14 @@ class NHLSchedule(models.Model):
                                           self.type,
                                           self.day, self.game)
 
-max_length=255
     class Meta:
-        ordering = ('-name', 'type', 'game', 'day')
+        db_table = 'nhl_schedules'
+        ordering = ['-name', 'type', 'game', 'day']
 
 
 class NHLPlayer(models.Model):
     external_id = models.PositiveIntegerField(unique=True)
-    team = models.ForeignKey(NHLTeam)
+    nhl_team = models.ForeignKey(NHLTeam)
     name = models.CharField(max_length=100)
     no = models.PositiveSmallIntegerField()
     pos = models.CharField(max_length=30)
@@ -48,7 +49,7 @@ class NHLPlayer(models.Model):
     height = models.PositiveIntegerField(max_length=3)
     weight = models.PositiveIntegerField(max_length=3)
     salary = models.DecimalField(decimal_places=3, default=0.450, max_digits=10)
-    seasons = models.PositiveIntegerField(default=0, max_length=2)
+    seasons = models.PositiveIntegerField(default=0, max_length=3)
     drafted = models.CharField(max_length=50)
     signed = models.CharField(max_length=50)
     assets = models.TextField()
@@ -81,7 +82,8 @@ class NHLPlayer(models.Model):
         return self.name
 
     class Meta:
-        ordering = ('name',)
+        db_table = 'nhl_players'
+        ordering = ['name']
 
 
 class NHLPlayerSkaterStat(models.Model):
@@ -109,7 +111,8 @@ class NHLPlayerSkaterStat(models.Model):
                                self.league)
 
     class Meta:
-        ordering = ('-year', 'team', 'league')
+        db_table = 'nhl_player_skater_stats'
+        ordering = ['-year', 'team', 'league']
 
 
 class NHLPlayerGoalieStat(models.Model):
@@ -136,4 +139,5 @@ class NHLPlayerGoalieStat(models.Model):
         return '%s %s (%S)' % (self.year, self.team, self.league)
 
     class Meta:
-        ordering = ('-year', 'team', 'league')
+        db_table = 'nhl_player_goalie_stats'
+        ordering = ['-year', 'team', 'league']
