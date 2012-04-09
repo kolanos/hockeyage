@@ -1,4 +1,17 @@
+from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import post_save
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User)
+
+    @classmethod
+    def create_user_profile(cls, sender, instance, created, **kwargs):
+        if created:
+            cls.objects.create(user=instance)
+
+post_save.connect(UserProfile.create_user_profile, sender=User)
 
 
 class NHLTeam(models.Model):
@@ -12,6 +25,7 @@ class NHLTeam(models.Model):
     class Meta:
         db_table = 'nhl_teams'
         ordering = ['city', 'name']
+        verbose_name = 'NHL Team'
 
 
 class NHLSchedule(models.Model):
@@ -32,6 +46,7 @@ class NHLSchedule(models.Model):
     class Meta:
         db_table = 'nhl_schedules'
         ordering = ['-name', 'type', 'game', 'day']
+        verbose_name = 'NHL Schedule'
 
 
 class NHLPlayer(models.Model):
@@ -48,7 +63,7 @@ class NHLPlayer(models.Model):
     pob = models.CharField(max_length=50)
     height = models.PositiveIntegerField(max_length=3)
     weight = models.PositiveIntegerField(max_length=3)
-    salary = models.DecimalField(decimal_places=3, default=0.450, max_digits=10)
+    salary = models.DecimalField(decimal_places=3, default=0.45, max_digits=10)
     seasons = models.PositiveIntegerField(default=0, max_length=3)
     drafted = models.CharField(max_length=50)
     signed = models.CharField(max_length=50)
@@ -61,22 +76,22 @@ class NHLPlayer(models.Model):
                                             ('farm', 'Farm'),
                                             ('prospect', 'Prospect'),
                                             ('retired', 'Retired')))
-    it = models.PositiveSmallIntegerField()
-    ck = models.PositiveSmallIntegerField(null=True)
-    fg = models.PositiveSmallIntegerField(null=True)
-    st = models.PositiveSmallIntegerField()
-    di = models.PositiveSmallIntegerField()
-    en = models.PositiveSmallIntegerField()
-    du = models.PositiveSmallIntegerField()
-    sp = models.PositiveSmallIntegerField()
-    ag = models.PositiveSmallIntegerField()
-    pa = models.PositiveSmallIntegerField()
-    pc = models.PositiveSmallIntegerField()
-    fo = models.PositiveSmallIntegerField()
-    sc = models.PositiveSmallIntegerField()
-    df = models.PositiveSmallIntegerField()
-    ex = models.PositiveSmallIntegerField()
-    ld = models.PositiveSmallIntegerField()
+    it = models.PositiveSmallIntegerField('Intensity', max_length=2)
+    ck = models.PositiveSmallIntegerField('Checking', max_length=2, null=True)
+    fg = models.PositiveSmallIntegerField('Fighting', max_length=2, null=True)
+    st = models.PositiveSmallIntegerField('Strength', max_length=2)
+    di = models.PositiveSmallIntegerField('Discipline', max_length=2)
+    en = models.PositiveSmallIntegerField('Endurance', max_length=2)
+    du = models.PositiveSmallIntegerField('Durability', max_length=2)
+    sp = models.PositiveSmallIntegerField('Speed', max_length=2)
+    ag = models.PositiveSmallIntegerField('Agility', max_length=2)
+    pa = models.PositiveSmallIntegerField('Passing', max_length=2)
+    pc = models.PositiveSmallIntegerField('Puck Control', max_length=2)
+    fo = models.PositiveSmallIntegerField('Faceoff', max_length=2)
+    sc = models.PositiveSmallIntegerField('Scoring', max_length=2)
+    df = models.PositiveSmallIntegerField('Defense', max_length=2)
+    ex = models.PositiveSmallIntegerField('Experience', max_length=2)
+    ld = models.PositiveSmallIntegerField('Leadership', max_length=2)
 
     def __unicode__(self):
         return self.name
@@ -84,6 +99,7 @@ class NHLPlayer(models.Model):
     class Meta:
         db_table = 'nhl_players'
         ordering = ['name']
+        verbose_name = 'NHL Player'
 
 
 class NHLPlayerSkaterStat(models.Model):
@@ -113,6 +129,7 @@ class NHLPlayerSkaterStat(models.Model):
     class Meta:
         db_table = 'nhl_player_skater_stats'
         ordering = ['-year', 'team', 'league']
+        verbose = 'NHL Skater Stat'
 
 
 class NHLPlayerGoalieStat(models.Model):
@@ -141,3 +158,4 @@ class NHLPlayerGoalieStat(models.Model):
     class Meta:
         db_table = 'nhl_player_goalie_stats'
         ordering = ['-year', 'team', 'league']
+        verbose_name = 'NHL Goalie Stat'

@@ -2,7 +2,7 @@
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
-
+AUTH_PROFILE_MODULE = 'accounts.UserProfile'
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
@@ -106,9 +106,7 @@ ROOT_URLCONF = 'hockeyage.urls'
 WSGI_APPLICATION = 'hockeyage.wsgi.application'
 
 TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
+    '/home/kolanos/Web/HockeyAge/hockeyage/templates',
 )
 
 INSTALLED_APPS = (
@@ -151,3 +149,19 @@ LOGGING = {
         },
     }
 }
+
+AUTH_PROFILE_MODULE = 'hockeyage.UserProfile'
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'profile'
+
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_USE_TLS = False
+
+try:
+    from localsettings import *
+except ImportError:
+    print "Missing localsettings."
+    pass
