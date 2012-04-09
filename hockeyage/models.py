@@ -129,7 +129,7 @@ class NHLPlayerSkaterStat(models.Model):
     class Meta:
         db_table = 'nhl_player_skater_stats'
         ordering = ['-year', 'team', 'league']
-        verbose = 'NHL Skater Stat'
+        verbose_name = 'NHL Skater Stat'
 
 
 class NHLPlayerGoalieStat(models.Model):

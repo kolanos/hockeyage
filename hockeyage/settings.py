@@ -161,7 +161,7 @@ EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = False
 
 try:
-    from localsettings import *
+    from .localsettings import *
 except ImportError:
     print "Missing localsettings."
     pass
