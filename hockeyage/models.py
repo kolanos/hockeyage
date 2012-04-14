@@ -17,7 +17,14 @@ post_save.connect(UserProfile.create_user_profile, sender=User)
 class NHLTeam(models.Model):
     city = models.CharField(max_length=32)
     name = models.CharField(max_length=32)
-    abbreviation = models.CharField(max_length=3)
+    acronym = models.CharField(max_length=3)
+    conference = models.CharField(max_length=1, choices=(("E", "Eastern"), ("W", "Western")))
+    division = models.CharField(max_length=1, choices=(('A', 'Atlantic'),
+                                                       ('C', 'Central'),
+                                                       ('NE', 'Northeast'),
+                                                       ('NW', 'Northwest'),
+                                                       ('P', 'Pacific'),
+                                                       ('S', 'Southeast')))
 
     def __unicode__(self):
         return '%s %s' % (self.city, self.name)
@@ -31,7 +38,7 @@ class NHLTeam(models.Model):
 class NHLSchedule(models.Model):
     name = models.CharField(max_length=6)
     type = models.CharField(max_length=7, choices=(('regular', 'Regular'),
-                                                    ('pre', 'Preseason')))
+                                                   ('pre', 'Preseason')))
     day = models.PositiveSmallIntegerField(max_length=3)
     game = models.PositiveSmallIntegerField(max_length=2)
     date = models.DateField()
@@ -121,6 +128,14 @@ class NHLPlayerSkaterStat(models.Model):
     gwg = models.PositiveIntegerField(null=True)
     shots = models.PositiveIntegerField(null=True)
 
+    @property
+    def ptspgp(self):
+        return '%.2f' % (float(self.gp) / self.pts)
+
+    @property
+    def shotpct(self):
+        return '%.3f' % (float(self.shots) / self.g)
+
     def __unicode__(self):
         return u'%s %s (%s)' % (self.year,
                                self.team,
@@ -149,8 +164,14 @@ class NHLPlayerGoalieStat(models.Model):
     so = models.PositiveIntegerField(null=True)
     ga = models.PositiveIntegerField(null=True)
     sha = models.PositiveIntegerField(null=True)
-    gaa = models.DecimalField(decimal_places=3, max_digits=10, null=True)
-    svpct = models.DecimalField(decimal_places=3, max_digits=10, null=True)
+
+    @property
+    def gaa(self):
+        return '%.2f' % (self.ga / (self.min / 60.0))
+
+    @property
+    def svpct(self):
+        return '%.3f' % (1 - (self.ga / float(self.sha)))
 
     def __unicode__(self):
         return '%s %s (%S)' % (self.year, self.team, self.league)
