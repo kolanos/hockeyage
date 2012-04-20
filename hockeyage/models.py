@@ -14,17 +14,23 @@ class UserProfile(models.Model):
 post_save.connect(UserProfile.create_user_profile, sender=User)
 
 
+CONFERENCE_CHOICES = (("E", "Eastern"),
+                      ("W", "Western"))
+
+DIVISION_CHOICES = (('A', 'Atlantic'),
+                    ('C', 'Central'),
+                    ('NE', 'Northeast'),
+                    ('NW', 'Northwest'),
+                    ('P', 'Pacific'),
+                    ('SE', 'Southeast'))
+
+
 class NHLTeam(models.Model):
     city = models.CharField(max_length=32)
     name = models.CharField(max_length=32)
     acronym = models.CharField(max_length=3)
-    conference = models.CharField(max_length=1, choices=(("E", "Eastern"), ("W", "Western")))
-    division = models.CharField(max_length=1, choices=(('A', 'Atlantic'),
-                                                       ('C', 'Central'),
-                                                       ('NE', 'Northeast'),
-                                                       ('NW', 'Northwest'),
-                                                       ('P', 'Pacific'),
-                                                       ('S', 'Southeast')))
+    conference = models.CharField(choices=CONFERENCE_CHOICES, max_length=1)
+    division = models.CharField(choices=DIVISION_CHOICES, max_length=1)
 
     def __unicode__(self):
         return '%s %s' % (self.city, self.name)
@@ -35,15 +41,18 @@ class NHLTeam(models.Model):
         verbose_name = 'NHL Team'
 
 
+SCHEDULE_TYPE_CHOICES = (('regular', 'Regular'),
+                         ('pre', 'Preseason'))
+
+
 class NHLSchedule(models.Model):
     name = models.CharField(max_length=6)
-    type = models.CharField(max_length=7, choices=(('regular', 'Regular'),
-                                                   ('pre', 'Preseason')))
+    type = models.CharField(choices=SCHEDULE_TYPE_CHOICES, max_length=7)
     day = models.PositiveSmallIntegerField(max_length=3)
     game = models.PositiveSmallIntegerField(max_length=2)
     date = models.DateField()
-    home = models.ForeignKey(NHLTeam, related_name='home_id')
-    road = models.ForeignKey(NHLTeam, related_name='road_id')
+    home = models.ForeignKey(NHLTeam, related_name='home')
+    road = models.ForeignKey(NHLTeam, related_name='road')
 
     def __unicode__(self):
         return u'%s %s Day %d Game %d' % (self.name,
@@ -56,21 +65,27 @@ class NHLSchedule(models.Model):
         verbose_name = 'NHL Schedule'
 
 
+SHOOT_CHOICES = (('L', 'Left'),
+                  ('R', 'Right'))
+
+TEAM_STATUS_CHOICES = (('pro', 'Pro'),
+                       ('farm', 'Farm'),
+                       ('prospect', 'Prospect'),
+                       ('retired', 'Retired'))
+
+
 class NHLPlayer(models.Model):
     external_id = models.PositiveIntegerField(unique=True)
-    nhl_team = models.ForeignKey(NHLTeam)
+    nhl_team = models.ForeignKey(NHLTeam, related_name='players')
     name = models.CharField(max_length=100)
     no = models.PositiveSmallIntegerField()
     pos = models.CharField(max_length=30)
-    shoots = models.CharField(max_length=1,
-                              default='L',
-                              choices=(('L', 'Left'),
-                                       ('R', 'Right')))
-    dob = models.DateField()
-    pob = models.CharField(max_length=50)
+    shoots = models.CharField(default='L', choices=SHOOT_CHOICES, max_length=1)
+    dob = models.DateField("Date of Birth")
+    pob = models.CharField("Place of birth", max_length=50)
     height = models.PositiveIntegerField(max_length=3)
     weight = models.PositiveIntegerField(max_length=3)
-    salary = models.DecimalField(decimal_places=3, default=0.45, max_digits=10)
+    salary = models.PositiveIntegerField(default=550000)
     seasons = models.PositiveIntegerField(default=0, max_length=3)
     drafted = models.CharField(max_length=50)
     signed = models.CharField(max_length=50)
@@ -78,11 +93,7 @@ class NHLPlayer(models.Model):
     flaws = models.TextField()
     potential = models.CharField(max_length=255)
     status = models.CharField(max_length=50)
-    team_status = models.CharField(max_length=10,
-                                   choices=(('pro', 'Pro'),
-                                            ('farm', 'Farm'),
-                                            ('prospect', 'Prospect'),
-                                            ('retired', 'Retired')))
+    team_status = models.CharField(choices=TEAM_STATUS_CHOICES, max_length=10)
     it = models.PositiveSmallIntegerField('Intensity', max_length=2)
     ck = models.PositiveSmallIntegerField('Checking', max_length=2, null=True)
     fg = models.PositiveSmallIntegerField('Fighting', max_length=2, null=True)
@@ -109,11 +120,13 @@ class NHLPlayer(models.Model):
         verbose_name = 'NHL Player'
 
 
+SEASON_CHOICES = (('regular', 'Regular'),
+                  ('playoff', 'Playoff'))
+
+
 class NHLPlayerSkaterStat(models.Model):
     player = models.ForeignKey(NHLPlayer)
-    type = models.CharField(max_length=50,
-                            choices=(('regular', 'Regular'),
-                                     ('playoff', 'Playoff')))
+    season = models.CharField(choices=SEASON_CHOICES, max_length=50)
     year = models.CharField(max_length=50)
     team = models.CharField(max_length=50)
     league = models.CharField(max_length=50)
@@ -149,9 +162,7 @@ class NHLPlayerSkaterStat(models.Model):
 
 class NHLPlayerGoalieStat(models.Model):
     player = models.ForeignKey(NHLPlayer)
-    type = models.CharField(max_length=50,
-                            choices=(('regular', 'Regular'),
-                                     ('playoff', 'Playoff')))
+    season = models.CharField(choices=SEASON_CHOICES, max_length=50)
     year = models.CharField(max_length=50)
     team = models.CharField(max_length=50)
     league = models.CharField(max_length=50)
@@ -180,3 +191,91 @@ class NHLPlayerGoalieStat(models.Model):
         db_table = 'nhl_player_goalie_stats'
         ordering = ['-year', 'team', 'league']
         verbose_name = 'NHL Goalie Stat'
+
+class League(models.Model):
+    name = models.CharField(max_length=255)
+    acronym = models.CharField(max_length=6, unique=True)
+    description = models.TextField()
+    commissioner = models.ForeignKey(User)
+    public = models.BooleanField(default=True)
+
+
+class Season(models.Model):
+    pass
+
+
+class Match(models.Model):
+    season = models.ForeignKey(Season)
+    day = models.PositiveSmallIntegerField()
+    game = models.PositiveSmallIntegerField()
+    home = models.ForeignKey(Team, related_name='home')
+    road = models.ForeignKey(Team, related_name='road')
+
+
+POSITION_CHOICES = (('lw', 'Left Wing'),
+                    ('c', 'Center'),
+                    ('rw', 'Right Wing'),
+                    ('ld', 'Left Defense'),
+                    ('rd', 'Right Defense'),
+                    ('g', 'Goalie'))
+
+
+STATUS_CHOICES = (('pro', 'Pro'),
+                  ('farm', 'Farm'),
+                  ('prospect', 'Prospect'))
+
+
+class Player(models.Model):
+    league = models.ForeignKey(League)
+    team = models.ForeignKey(Team)
+    nhl_player = models.ForeignKey(NHLPlayer)
+    pos = models.CharField(choices=POSITION_CHOICES, max_length=2)
+    status = models.CharField(choices=STATUS_CHOICES, default='farm',
+                              max_length=8)
+    condition = models.PositiveSmallIntegerField(default=100, max_length=3)
+    morale = models.PositiveSmallIntegerField(default=100, max_length=3)
+
+
+LINE_STRENGTH_CHOICES = (('ev', 'Even Strength'),
+                         ('pp', 'Power Play'),
+                         ('pk', 'Penalty Kill'),
+                         ('lm', 'Last Minute'),
+                         ('ex', 'Extra'))
+
+
+class Line(models.Model):
+    match = models.ForeignKey(Match)
+    team = models.ForeignKey(Team)
+    strength = models.CharField(choices=LINE_STRENGTH_CHOICES, default='ev',
+                                max_length=2)
+    man = models.PositiveSmallIntegerField(default=5, max_length=1)
+    number = models.PositiveSmallIntegerField(default=1, max_length=1)
+    percent = models.PositiveSmallIntegerField(default=20, max_length=2)
+    lw = models.ForeignKey(Player, related_name='lw')
+    c = models.ForeignKey(Player, related_name='c')
+    rw = models.ForeignKey(Player, related_name='rw')
+    f = models.ForeignKey(Player, related_name='f')
+    w = models.ForeignKey(Player, related_name='w')
+    ld = models.ForeignKey(Player, related_name='ld')
+    rd = models.foreignKey(Player, related_name='rd')
+
+
+STRENGTH_CHOICES = (('ev', 'Even Strength'),
+                    ('pp', 'Power Play'),
+                    ('pk', 'Penalty Kill'))
+
+ZONE_CHOICES = (('home', 'Home'),
+                ('neutral', 'Neutral'),
+                ('road', 'Road'))
+
+
+class Play(models.Model):
+    match = models.ForeignKey(Match)
+    team = models.ForeignKey(Team)
+    period = models.PositiveSmallIntegerField(max_length=1)
+    strength = models.CharField(choices=STRENGTH_CHOICES, max_length=2)
+    play = models.CharField()
+    zone = models.CharField(choices=ZONE_CHOICES)
+    player1 = models.ForeignKey(Player)
+    player2 = models.ForeignKey(Player)
+    player3 = models.ForeignKey(Player)
