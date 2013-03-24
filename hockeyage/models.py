@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
 
+from game.clock import format_time
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User)
@@ -14,23 +16,22 @@ class UserProfile(models.Model):
 post_save.connect(UserProfile.create_user_profile, sender=User)
 
 
-CONFERENCE_CHOICES = (("E", "Eastern"),
-                      ("W", "Western"))
-
-DIVISION_CHOICES = (('A', 'Atlantic'),
-                    ('C', 'Central'),
-                    ('NE', 'Northeast'),
-                    ('NW', 'Northwest'),
-                    ('P', 'Pacific'),
-                    ('SE', 'Southeast'))
-
-
 class NHLTeam(models.Model):
+    CONFERENCES = (('E', 'Eastern'),
+                   ('W', 'Western'))
+
+    DIVISIONS = (('A', 'Atlantic'),
+                 ('C', 'Central'),
+                 ('NE', 'Northeast'),
+                 ('NW', 'Northwest'),
+                 ('P', 'Pacific'),
+                 ('SE', 'Southeast'))
+
     city = models.CharField(max_length=32)
     name = models.CharField(max_length=32)
     acronym = models.CharField(max_length=3)
-    conference = models.CharField(choices=CONFERENCE_CHOICES, max_length=1)
-    division = models.CharField(choices=DIVISION_CHOICES, max_length=1)
+    conference = models.CharField(choices=self.CONFERENCES, max_length=1)
+    division = models.CharField(choices=self.DIVISIONS, max_length=1)
 
     def __unicode__(self):
         return '%s %s' % (self.city, self.name)
@@ -40,14 +41,12 @@ class NHLTeam(models.Model):
         ordering = ['city', 'name']
         verbose_name = 'NHL Team'
 
-
-SCHEDULE_TYPE_CHOICES = (('regular', 'Regular'),
-                         ('pre', 'Preseason'))
-
-
 class NHLSchedule(models.Model):
+    SCHEDULE_TYPES = (('regular', 'Regular'),
+                      ('pre', 'Preseason'))
+
     name = models.CharField(max_length=6)
-    type = models.CharField(choices=SCHEDULE_TYPE_CHOICES, max_length=7)
+    type = models.CharField(choices=self.SCHEDULE_TYPES, max_length=7)
     day = models.PositiveSmallIntegerField(max_length=3)
     game = models.PositiveSmallIntegerField(max_length=2)
     date = models.DateField()
@@ -55,9 +54,10 @@ class NHLSchedule(models.Model):
     road = models.ForeignKey(NHLTeam, related_name='road')
 
     def __unicode__(self):
-        return u'%s %s Day %d Game %d' % (self.name,
-                                          self.type,
-                                          self.day, self.game)
+        return '%s %s Day %d Game %d' % (self.name,
+                                         self.type,
+                                         self.day,
+                                         self.game)
 
     class Meta:
         db_table = 'nhl_schedules'
@@ -65,22 +65,23 @@ class NHLSchedule(models.Model):
         verbose_name = 'NHL Schedule'
 
 
-SHOOT_CHOICES = (('L', 'Left'),
-                  ('R', 'Right'))
-
-TEAM_STATUS_CHOICES = (('pro', 'Pro'),
-                       ('farm', 'Farm'),
-                       ('prospect', 'Prospect'),
-                       ('retired', 'Retired'))
 
 
 class NHLPlayer(models.Model):
+    SHOOTS = (('L', 'Left'),
+              ('R', 'Right'))
+
+    TEAM_STATUSES = (('pro', 'Pro'),
+                     ('farm', 'Farm'),
+                     ('prospect', 'Prospect'),
+                     ('retired', 'Retired'))
+
     external_id = models.PositiveIntegerField(unique=True)
-    nhl_team = models.ForeignKey(NHLTeam, related_name='players')
+    team = models.ForeignKey(NHLTeam)
     name = models.CharField(max_length=100)
     no = models.PositiveSmallIntegerField()
     pos = models.CharField(max_length=30)
-    shoots = models.CharField(default='L', choices=SHOOT_CHOICES, max_length=1)
+    shoots = models.CharField(default='L', choices=self.SHOOTS, max_length=1)
     dob = models.DateField("Date of Birth")
     pob = models.CharField("Place of birth", max_length=50)
     height = models.PositiveIntegerField(max_length=3)
@@ -93,7 +94,7 @@ class NHLPlayer(models.Model):
     flaws = models.TextField()
     potential = models.CharField(max_length=255)
     status = models.CharField(max_length=50)
-    team_status = models.CharField(choices=TEAM_STATUS_CHOICES, max_length=10)
+    team_status = models.CharField(choices=TEAM_STATUSES, max_length=10)
     it = models.PositiveSmallIntegerField('Intensity', max_length=2)
     ck = models.PositiveSmallIntegerField('Checking', max_length=2, null=True)
     fg = models.PositiveSmallIntegerField('Fighting', max_length=2, null=True)
@@ -120,13 +121,12 @@ class NHLPlayer(models.Model):
         verbose_name = 'NHL Player'
 
 
-SEASON_CHOICES = (('regular', 'Regular'),
-                  ('playoff', 'Playoff'))
-
-
 class NHLPlayerSkaterStat(models.Model):
+    SEASONS = (('regular', 'Regular'),
+               ('playoff', 'Playoff'))
+
     player = models.ForeignKey(NHLPlayer)
-    season = models.CharField(choices=SEASON_CHOICES, max_length=50)
+    season = models.CharField(choices=self.SEASONS, max_length=50)
     year = models.CharField(max_length=50)
     team = models.CharField(max_length=50)
     league = models.CharField(max_length=50)
@@ -150,7 +150,7 @@ class NHLPlayerSkaterStat(models.Model):
         return '%.3f' % (float(self.shots) / self.g)
 
     def __unicode__(self):
-        return u'%s %s (%s)' % (self.year,
+        return '%s %s (%s)' % (self.year,
                                self.team,
                                self.league)
 
@@ -161,8 +161,11 @@ class NHLPlayerSkaterStat(models.Model):
 
 
 class NHLPlayerGoalieStat(models.Model):
+    SEASONS = (('regular', 'Regular'),
+               ('playoff', 'Playoff'))
+
     player = models.ForeignKey(NHLPlayer)
-    season = models.CharField(choices=SEASON_CHOICES, max_length=50)
+    season = models.CharField(choices=self.SEASONS, max_length=50)
     year = models.CharField(max_length=50)
     team = models.CharField(max_length=50)
     league = models.CharField(max_length=50)
@@ -185,23 +188,73 @@ class NHLPlayerGoalieStat(models.Model):
         return '%.3f' % (1 - (self.ga / float(self.sha)))
 
     def __unicode__(self):
-        return '%s %s (%S)' % (self.year, self.team, self.league)
+        return '%s %s (%s)' % (self.year, self.team, self.league)
 
     class Meta:
         db_table = 'nhl_player_goalie_stats'
         ordering = ['-year', 'team', 'league']
         verbose_name = 'NHL Goalie Stat'
 
+
+class NHLMatchEvent(models.Model):
+    season = models.CharField(max_length=8)
+    game = models.PositiveIntegerField()
+    number = models.PositiveSmallIntegerField('#')
+    period = models.PositiveSmallIntegerField()
+    strength = models.CharField(max_length=2, null=True)
+    elapsed = models.PositiveIntegerField()
+    remaining = models.PositiveIntegerField()
+    type = models.CharField(max_length=50)
+    zone = models.CharField(max_length=50, null=True)
+    description = models.CharField(max_length=255, null=True)
+    player1 = models.CharField(max_length=255, null=True)
+    player2 = models.CharField(max_length=255, null=True)
+    player3 = models.CharField(max_length=255, null=True)
+    shot_type = models.CharField(max_length=50, null=True)
+    distance = models.PositiveIntegerField()
+    penalty = models.CharField(max_length=50, null=True)
+    penalty_minutes = models.PositiveSmallIntegerField()
+
+
 class League(models.Model):
     name = models.CharField(max_length=255)
     acronym = models.CharField(max_length=6, unique=True)
-    description = models.TextField()
+    description = models.TextField(null=True)
     commissioner = models.ForeignKey(User)
     public = models.BooleanField(default=True)
 
+    def __unicode__(self):
+        return '%s (%s)' % (self.name, self.acronym)
+
+    class Meta:
+        db_table = 'leagues'
+        ordering = ('name',)
+
+
+class Team(models.Model):
+    nhl_team = models.ForeignKey(NHLTeam)
+    league = models.ForeignKey(League)
+    gm = models.ForeignKey(User)
+
+    def __unicode__(self):
+        return '%s (%s)' % (unicode(self.nhl_team),
+                               unicode(self.league))
+
+    class Meta:
+        db_table = 'teams'
+        ordering = ['league']
+
 
 class Season(models.Model):
-    pass
+    league = models.ForeignKey(League)
+    year = models.PositiveSmallIntegerField(default=1)
+
+    def __unicode__(self):
+        return '%s - Year %d' % (unicode(self.league), self.year)
+
+    class Meta:
+        db_table = 'seasons'
+        ordering = ['-year']
 
 
 class Match(models.Model):
@@ -211,71 +264,108 @@ class Match(models.Model):
     home = models.ForeignKey(Team, related_name='home')
     road = models.ForeignKey(Team, related_name='road')
 
+    def __unicode__(self):
+        return 'Day %d Game %d (%s @ %s)' % (self.day,
+                                             self.game,
+                                             self.road,
+                                             self.home)
 
-POSITION_CHOICES = (('lw', 'Left Wing'),
-                    ('c', 'Center'),
-                    ('rw', 'Right Wing'),
-                    ('ld', 'Left Defense'),
-                    ('rd', 'Right Defense'),
-                    ('g', 'Goalie'))
-
-
-STATUS_CHOICES = (('pro', 'Pro'),
-                  ('farm', 'Farm'),
-                  ('prospect', 'Prospect'))
+    class Meta:
+        db_table = 'matches'
+        ordering = ['day', 'game']
 
 
 class Player(models.Model):
+    POSITIONS = (('lw', 'Left Wing'),
+                 ('c', 'Center'),
+                 ('rw', 'Right Wing'),
+                 ('ld', 'Left Defense'),
+                 ('rd', 'Right Defense'),
+                 ('g', 'Goalie'))
+
+    STATUSES = (('pro', 'Pro'),
+                ('farm', 'Farm'),
+                ('prospect', 'Prospect'))
+
     league = models.ForeignKey(League)
     team = models.ForeignKey(Team)
     nhl_player = models.ForeignKey(NHLPlayer)
-    pos = models.CharField(choices=POSITION_CHOICES, max_length=2)
-    status = models.CharField(choices=STATUS_CHOICES, default='farm',
+    pos = models.CharField(choices=self.POSITIONS, max_length=2)
+    status = models.CharField(choices=self.STATUSES, default='farm',
                               max_length=8)
     condition = models.PositiveSmallIntegerField(default=100, max_length=3)
     morale = models.PositiveSmallIntegerField(default=100, max_length=3)
 
+    def __unicode__(self):
+        return unicode(self.nhl_player)
 
-LINE_STRENGTH_CHOICES = (('ev', 'Even Strength'),
-                         ('pp', 'Power Play'),
-                         ('pk', 'Penalty Kill'),
-                         ('lm', 'Last Minute'),
-                         ('ex', 'Extra'))
+    class Meta:
+        db_table = 'players'
+        ordering = ['status', 'pos']
 
 
 class Line(models.Model):
+    LINE_STRENGTHS = (('ev', 'Even Strength'),
+                      ('pp', 'Power Play'),
+                      ('pk', 'Penalty Kill'),
+                      ('lm', 'Last Minute'),
+                      ('ex', 'Extra'))
+
     match = models.ForeignKey(Match)
     team = models.ForeignKey(Team)
-    strength = models.CharField(choices=LINE_STRENGTH_CHOICES, default='ev',
+    strength = models.CharField(choices=LINE_STRENGTHS, default='ev',
                                 max_length=2)
     man = models.PositiveSmallIntegerField(default=5, max_length=1)
     number = models.PositiveSmallIntegerField(default=1, max_length=1)
     percent = models.PositiveSmallIntegerField(default=20, max_length=2)
-    lw = models.ForeignKey(Player, related_name='lw')
-    c = models.ForeignKey(Player, related_name='c')
-    rw = models.ForeignKey(Player, related_name='rw')
-    f = models.ForeignKey(Player, related_name='f')
-    w = models.ForeignKey(Player, related_name='w')
-    ld = models.ForeignKey(Player, related_name='ld')
-    rd = models.foreignKey(Player, related_name='rd')
+    lw = models.ForeignKey(Player, null=True, related_name='lw')
+    c = models.ForeignKey(Player, null=True, related_name='c')
+    rw = models.ForeignKey(Player, null=True, related_name='rw')
+    f = models.ForeignKey(Player, null=True, related_name='f')
+    w = models.ForeignKey(Player, null=True, related_name='w')
+    ld = models.ForeignKey(Player, null=True, related_name='ld')
+    rd = models.ForeignKey(Player, null=True, related_name='rd')
 
+    def __unicode__(self):
+        return '%s %d %d' % (self.strength, self.man, self.number)
 
-STRENGTH_CHOICES = (('ev', 'Even Strength'),
-                    ('pp', 'Power Play'),
-                    ('pk', 'Penalty Kill'))
-
-ZONE_CHOICES = (('home', 'Home'),
-                ('neutral', 'Neutral'),
-                ('road', 'Road'))
+    class Meta:
+        db_table = 'lines'
+        ordering = ['strength', 'man', '-number']
 
 
 class Play(models.Model):
+    STRENGTHS = (('ev', 'Even Strength'),
+                 ('pp', 'Power Play'),
+                 ('pk', 'Penalty Kill'))
+
+    ZONES = (('home', 'Home'),
+             ('neutral', 'Neutral'),
+             ('road', 'Road'))
+
     match = models.ForeignKey(Match)
     team = models.ForeignKey(Team)
     period = models.PositiveSmallIntegerField(max_length=1)
-    strength = models.CharField(choices=STRENGTH_CHOICES, max_length=2)
-    play = models.CharField()
-    zone = models.CharField(choices=ZONE_CHOICES)
-    player1 = models.ForeignKey(Player)
-    player2 = models.ForeignKey(Player)
-    player3 = models.ForeignKey(Player)
+    clock = models.PositiveSmallIntegerField()
+    strength = models.CharField(choices=self.STRENGTHS, max_length=2)
+    play = models.CharField(max_length=15)
+    zone = models.CharField(choices=self.ZONES, max_length=7)
+    player1 = models.ForeignKey(Player, related_name='player1')
+    player2 = models.ForeignKey(Player, null=True, related_name='player2')
+    player3 = models.ForeignKey(Player, null=True, related_name='player3')
+
+    def __unicode__(self):
+        return 'Period %d %s - %s - %s - %s - %s' % (self.period,
+                                                     self.elapsed,
+                                                     self.strength,
+                                                     self.play,
+                                                     self.zone,
+                                                     self.player1)
+
+    @property
+    def elapsed(self):
+        return format_time(self.clock)
+
+    class Meta:
+        db_table = 'plays'
+        ordering = ['-period', '-clock']

@@ -68,7 +68,9 @@ class Match(object):
             elif self.zone < 0:
                 self.zone = -1
 
-            self.event.add(self.period, self.clock, self.play(),
+            self.event.add(self.period,
+                           self.clock,
+                           self.play(),
                            zone(self.zone))
 
     def end_game(self):

@@ -160,8 +160,8 @@ EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = False
 
-try:
-    from .localsettings import *
-except ImportError:
-    print "Missing localsettings."
-    pass
+#try:
+#    from .localsettings import *
+#except ImportError:
+#    print "Missing localsettings."
+#    pass
