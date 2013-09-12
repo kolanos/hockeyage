@@ -7,15 +7,13 @@ from game.clock import format_time
 
 
 class NHLTeam(db.Model):
-    CONFERENCES = (('E', 'Eastern'),
-                   ('W', 'Western'))
+    CONFERENCES = [('E', 'Eastern'),
+                   ('W', 'Western')]
 
-    DIVISIONS = (('A', 'Atlantic'),
+    DIVISIONS = [('A', 'Atlantic'),
                  ('C', 'Central'),
-                 ('NE', 'Northeast'),
-                 ('NW', 'Northwest'),
-                 ('P', 'Pacific'),
-                 ('SE', 'Southeast'))
+                 ('M', 'Metropolitan'),
+                 ('P', 'Pacific')]
 
     city = CharField(max_length=32)
     name = CharField(max_length=32)
@@ -32,8 +30,8 @@ class NHLTeam(db.Model):
 
 
 class NHLSchedule(db.Model):
-    SCHEDULE_TYPES = (('regular', 'Regular'),
-                      ('pre', 'Preseason'))
+    SCHEDULE_TYPES = [('regular', 'Regular'),
+                      ('pre', 'Preseason')]
 
     name = CharField(max_length=6)
     type = CharField(choices=self.SCHEDULE_TYPES, max_length=7)

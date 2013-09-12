@@ -1,4 +1,5 @@
 import random
+
 from hockeyage.util import dotdict, probability
 
 
