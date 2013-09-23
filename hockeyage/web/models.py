@@ -63,39 +63,39 @@ class NHLPlayer(db.Model):
 
     external_id = IntegerField(unique=True)
     team = ForeignKeyField(NHLTeam)
-    name = CharField(max_length=100)
+    name = CharField()
     no = IntegerField()
-    pos = CharField(max_length=30)
-    shoots = CharField(default='L', choices=self.SHOOTS, max_length=1)
-    dob = DateField("Date of Birth")
-    pob = CharField("Place of birth", max_length=50)
-    height = IntegerField(max_length=3)
-    weight = IntegerField(max_length=3)
+    pos = CharField()
+    shoots = CharField('Shoots/Catches', choices=self.SHOOTS, default='L')
+    dob = DateField('Date of Birth')
+    pob = CharField('Place of birth')
+    height = IntegerField()
+    weight = IntegerField()
     salary = IntegerField(default=550000)
-    seasons = IntegerField(default=0, max_length=3)
-    drafted = CharField(max_length=50)
-    signed = CharField(max_length=50)
+    seasons = IntegerField(default=0)
+    drafted = CharField()
+    signed = CharField()
     assets = TextField()
     flaws = TextField()
-    potential = CharField(max_length=255)
-    status = CharField(max_length=50)
-    team_status = CharField(choices=TEAM_STATUSES, max_length=10)
-    it = IntegerField('Intensity', max_length=2)
-    ck = IntegerField('Checking', max_length=2, null=True)
-    fg = IntegerField('Fighting', max_length=2, null=True)
-    st = IntegerField('Strength', max_length=2)
-    di = IntegerField('Discipline', max_length=2)
-    en = IntegerField('Endurance', max_length=2)
-    du = IntegerField('Durability', max_length=2)
-    sp = IntegerField('Speed', max_length=2)
-    ag = IntegerField('Agility', max_length=2)
-    pa = IntegerField('Passing', max_length=2)
-    pc = IntegerField('Puck Control', max_length=2)
-    fo = IntegerField('Faceoff', max_length=2)
-    sc = IntegerField('Scoring', max_length=2)
-    df = IntegerField('Defense', max_length=2)
-    ex = IntegerField('Experience', max_length=2)
-    ld = IntegerField('Leadership', max_length=2)
+    potential = CharField()
+    status = CharField()
+    team_status = CharField(choices=TEAM_STATUSES)
+    it = IntegerField('Intensity')
+    ck = IntegerField('Checking', null=True)
+    fg = IntegerField('Fighting', null=True)
+    st = IntegerField('Strength')
+    di = IntegerField('Discipline')
+    en = IntegerField('Endurance')
+    du = IntegerField('Durability')
+    sp = IntegerField('Speed')
+    ag = IntegerField('Agility')
+    pa = IntegerField('Passing')
+    pc = IntegerField('Puck Control')
+    fo = IntegerField('Faceoff')
+    sc = IntegerField('Scoring')
+    df = IntegerField('Defense')
+    ex = IntegerField('Experience')
+    ld = IntegerField('Leadership')
 
     def __unicode__(self):
         return self.name
@@ -110,37 +110,41 @@ class NHLPlayerSkaterStat(db.Model):
                ('playoff', 'Playoff')]
 
     player = ForeignKeyField(NHLPlayer)
-    season = CharField(choices=self.SEASONS, max_length=50)
-    year = CharField(max_length=50)
-    team = CharField(max_length=50)
-    league = CharField(max_length=50)
-    gp = IntegerField(null=True)
+    season = CharField(choices=self.SEASONS)
+    year = CharField()
+    team = CharField()
+    league = CharField()
+    gp = IntegerField('GP', null=True)
     g = IntegerField(null=True)
     a = IntegerField(null=True)
-    pts = IntegerField(null=True)
-    d = IntegerField(null=True)
-    pim = IntegerField(null=True)
-    ppg = IntegerField(null=True)
-    shg = IntegerField(null=True)
-    gwg = IntegerField(null=True)
+    pts = IntegerField('PTS', null=True)
+    pm = IntegerField('+/-', null=True)
+    pim = IntegerField('PIM', null=True)
+    ppg = IntegerField('PPG', null=True)
+    shg = IntegerField('SHG', null=True)
+    gwg = IntegerField('GWG', null=True)
     shots = IntegerField(null=True)
 
-    @property
-    def ptspgp(self):
-        return '%.2f' % (float(self.gp) / self.pts)
-
-    @property
-    def shotpct(self):
-        return '%.3f' % (float(self.shots) / self.g)
+    class Meta:
+        db_table = 'nhl_player_skater_stat'
+        order_by = ('-year', 'team', 'league')
 
     def __unicode__(self):
         return '%s %s (%s)' % (self.year,
                                self.team,
                                self.league)
 
-    class Meta:
-        db_table = 'nhl_player_skater_stat'
-        order_by = ('-year', 'team', 'league')
+    @property
+    def ptspgp(self):
+        if self.gp and self.pts:
+            return '%.2f' % float(self.gp) / self.pts
+        return None
+
+    @property
+    def shotpct(self):
+        if self.shots and self.g:
+            return '%.3f' % float(self.shots) / self.g
+        return None
 
 
 class NHLPlayerGoalieStat(db.Model):
@@ -152,49 +156,53 @@ class NHLPlayerGoalieStat(db.Model):
     year = CharField(max_length=50)
     team = CharField(max_length=50)
     league = CharField(max_length=50)
-    gpi = IntegerField(null=True)
+    gpi = IntegerField('GPI', null=True)
     w = IntegerField(null=True)
     l = IntegerField(null=True)
     t = IntegerField(null=True)
-    otl = IntegerField(null=True)
+    otl = IntegerField('OTL', null=True)
     min = IntegerField(null=True)
-    so = IntegerField(null=True)
-    ga = IntegerField(null=True)
-    sha = IntegerField(null=True)
-
-    @property
-    def gaa(self):
-        return '%.2f' % (self.ga / (self.min / 60.0))
-
-    @property
-    def svpct(self):
-        return '%.3f' % (1 - (self.ga / float(self.sha)))
-
-    def __unicode__(self):
-        return '%s %s (%s)' % (self.year, self.team, self.league)
+    so = IntegerField('SO', null=True)
+    ga = IntegerField('GA', null=True)
+    sha = IntegerField('SHA', null=True)
 
     class Meta:
         db_table = 'nhl_player_goalie_stat'
         order_by = ('-year', 'team', 'league')
 
+    def __unicode__(self):
+        return '%s %s (%s)' % (self.year, self.team, self.league)
+
+    @property
+    def gaa(self):
+        if self.ga and self.min:
+            return '%.2f' % self.ga / (self.min / 60.0)
+        return None
+
+    @property
+    def svpct(self):
+        if self.ga and self.sha:
+            return '%.3f' % (1 - self.ga / float(self.sha))
+        return None
+
 
 class NHLMatchEvent(db.Model):
-    season = CharField(max_length=8)
+    season = CharField()
     game = IntegerField()
     number = IntegerField('#')
     period = IntegerField()
-    strength = CharField(max_length=2, null=True)
+    strength = CharField(null=True)
     elapsed = IntegerField()
     remaining = IntegerField()
-    type = CharField(max_length=50)
-    zone = CharField(max_length=50, null=True)
-    description = CharField(max_length=255, null=True)
-    player1 = CharField(max_length=255, null=True)
-    player2 = CharField(max_length=255, null=True)
-    player3 = CharField(max_length=255, null=True)
-    shot_type = CharField(max_length=50, null=True)
+    type = CharField()
+    zone = CharField(null=True)
+    description = CharField(null=True)
+    player1 = CharField(null=True)
+    player2 = CharField(null=True)
+    player3 = CharField(null=True)
+    shot_type = CharField(null=True)
     distance = IntegerField()
-    penalty = CharField(max_length=50, null=True)
+    penalty = CharField(null=True)
     penalty_minutes = IntegerField()
 
     class Meta:
@@ -203,8 +211,8 @@ class NHLMatchEvent(db.Model):
 
 
 class League(db.Model):
-    name = CharField(max_length=255)
-    acronym = CharField(max_length=6, unique=True)
+    name = CharField()
+    acronym = CharField(unique=True)
     description = TextField(null=True)
     commissioner = ForeignKeyField(User)
     public = BooleanField(default=True)
