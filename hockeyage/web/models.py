@@ -1,9 +1,8 @@
 from peewee import CharField, DateField, ForeignKeyField, IntegerField, \
                    TextField
 
+from hockeyage.game.clock import format_time
 from hockeyage.web import db
-
-from game.clock import format_time
 
 
 class NHLTeam(db.Model):
@@ -15,41 +14,41 @@ class NHLTeam(db.Model):
                  ('M', 'Metropolitan'),
                  ('P', 'Pacific')]
 
-    city = CharField(max_length=32)
-    name = CharField(max_length=32)
-    acronym = CharField(max_length=3)
-    conference = CharField(choices=self.CONFERENCES, max_length=1)
-    division = CharField(choices=self.DIVISIONS, max_length=1)
-
-    def __unicode__(self):
-        return '%s %s' % (self.city, self.name)
+    city = CharField()
+    name = CharField()
+    acronym = CharField()
+    conference = CharField(choices=self.CONFERENCES)
+    division = CharField(choices=self.DIVISIONS)
 
     class Meta:
         db_table = 'nhl_team'
         order_by = ('city', 'name')
+
+    def __unicode__(self):
+        return '%s %s' % (self.city, self.name)
 
 
 class NHLSchedule(db.Model):
     SCHEDULE_TYPES = [('regular', 'Regular'),
                       ('pre', 'Preseason')]
 
-    name = CharField(max_length=6)
-    type = CharField(choices=self.SCHEDULE_TYPES, max_length=7)
-    day = IntegerField(max_length=3)
-    game = IntegerField(max_length=2)
+    name = CharField()
+    type = CharField(choices=self.SCHEDULE_TYPES)
+    day = IntegerField()
+    game = IntegerField()
     date = DateField()
-    home = ForeignKeyField(NHLTeam, related_name='home')
-    road = ForeignKeyField(NHLTeam, related_name='road')
+    home = ForeignKeyField(NHLTeam, related_name='home_games')
+    road = ForeignKeyField(NHLTeam, related_name='road_games')
+
+    class Meta:
+        db_table = 'nhl_schedule'
+        order_by = ['-name', 'type', 'game', 'day']
 
     def __unicode__(self):
         return '%s %s Day %d Game %d' % (self.name,
                                          self.type,
                                          self.day,
                                          self.game)
-
-    class Meta:
-        db_table = 'nhl_schedule'
-        order_by = ['-name', 'type', 'game', 'day']
 
 
 class NHLPlayer(db.Model):
@@ -62,16 +61,16 @@ class NHLPlayer(db.Model):
                      ('retired', 'Retired')]
 
     external_id = IntegerField(unique=True)
-    team = ForeignKeyField(NHLTeam)
+    team = ForeignKeyField(NHLTeam, related_name='players')
     name = CharField()
     no = IntegerField()
     pos = CharField()
-    shoots = CharField('Shoots/Catches', choices=self.SHOOTS, default='L')
-    dob = DateField('Date of Birth')
-    pob = CharField('Place of birth')
+    shoots = CharField(choices=self.SHOOTS, verbose_name='Shoots/Catches')
+    dob = DateField(verbose_name='Date of Birth')
+    pob = CharField(verbose_name='Place of Birth')
     height = IntegerField()
     weight = IntegerField()
-    salary = IntegerField(default=550000)
+    salary = IntegerField(null=True)
     seasons = IntegerField(default=0)
     drafted = CharField()
     signed = CharField()
@@ -80,49 +79,49 @@ class NHLPlayer(db.Model):
     potential = CharField()
     status = CharField()
     team_status = CharField(choices=TEAM_STATUSES)
-    it = IntegerField('Intensity')
-    ck = IntegerField('Checking', null=True)
-    fg = IntegerField('Fighting', null=True)
-    st = IntegerField('Strength')
-    di = IntegerField('Discipline')
-    en = IntegerField('Endurance')
-    du = IntegerField('Durability')
-    sp = IntegerField('Speed')
-    ag = IntegerField('Agility')
-    pa = IntegerField('Passing')
-    pc = IntegerField('Puck Control')
-    fo = IntegerField('Faceoff')
-    sc = IntegerField('Scoring')
-    df = IntegerField('Defense')
-    ex = IntegerField('Experience')
-    ld = IntegerField('Leadership')
-
-    def __unicode__(self):
-        return self.name
+    it = IntegerField(verbose_name='Intensity')
+    ck = IntegerField(null=True, verbose_name='Checking')
+    fg = IntegerField(null=True, verbose_name='Fighting')
+    st = IntegerField(verbose_name='Strength')
+    di = IntegerField(verbose_name='Discipline')
+    en = IntegerField(verbose_name='Endurance')
+    du = IntegerField(verbose_name='Durability')
+    sp = IntegerField(verbose_name='Speed')
+    ag = IntegerField(verbose_name='Agility')
+    pa = IntegerField(verbose_name='Passing')
+    pc = IntegerField(verbose_name='Puck Control')
+    fo = IntegerField(verbose_name='Faceoff')
+    sc = IntegerField(verbose_name='Scoring')
+    df = IntegerField(verbose_name='Defense')
+    ex = IntegerField(verbose_name='Experience')
+    ld = IntegerField(verbose_name='Leadership')
 
     class Meta:
         db_table = 'nhl_player'
         order_by = ('name',)
+
+    def __unicode__(self):
+        return self.name
 
 
 class NHLPlayerSkaterStat(db.Model):
     SEASONS = [('regular', 'Regular'),
                ('playoff', 'Playoff')]
 
-    player = ForeignKeyField(NHLPlayer)
+    player = ForeignKeyField(NHLPlayer, related_name='skater_stats')
     season = CharField(choices=self.SEASONS)
     year = CharField()
     team = CharField()
     league = CharField()
-    gp = IntegerField('GP', null=True)
+    gp = IntegerField(null=True, verbose_name='GP')
     g = IntegerField(null=True)
     a = IntegerField(null=True)
-    pts = IntegerField('PTS', null=True)
-    pm = IntegerField('+/-', null=True)
-    pim = IntegerField('PIM', null=True)
-    ppg = IntegerField('PPG', null=True)
-    shg = IntegerField('SHG', null=True)
-    gwg = IntegerField('GWG', null=True)
+    pts = IntegerField(null=True, verbose_name='PTS')
+    pm = IntegerField(null=True, verbose_name='+/-')
+    pim = IntegerField(null=True, verbose_name='PIM')
+    ppg = IntegerField(null=True, verbose_name='PPG')
+    shg = IntegerField(null=True, verbose_name='SHG')
+    gwg = IntegerField(null=True, verbose_name='GWG')
     shots = IntegerField(null=True)
 
     class Meta:
@@ -151,20 +150,20 @@ class NHLPlayerGoalieStat(db.Model):
     SEASONS = [('regular', 'Regular'),
                ('playoff', 'Playoff')]
 
-    player = ForeignKeyField(NHLPlayer)
-    season = CharField(choices=self.SEASONS, max_length=50)
-    year = CharField(max_length=50)
-    team = CharField(max_length=50)
-    league = CharField(max_length=50)
-    gpi = IntegerField('GPI', null=True)
+    player = ForeignKeyField(NHLPlayer, related_name='goalie_stats')
+    season = CharField(choices=self.SEASONS)
+    year = CharField()
+    team = CharField()
+    league = CharField()
+    gpi = IntegerField(null=True, verbose_name='GPI')
     w = IntegerField(null=True)
     l = IntegerField(null=True)
     t = IntegerField(null=True)
-    otl = IntegerField('OTL', null=True)
+    otl = IntegerField(null=True, verbose_name='OTL')
     min = IntegerField(null=True)
-    so = IntegerField('SO', null=True)
-    ga = IntegerField('GA', null=True)
-    sha = IntegerField('SHA', null=True)
+    so = IntegerField(null=True, verbose_name='SO')
+    ga = IntegerField(null=True, verbose_name='GA')
+    sha = IntegerField(null=True, verbose_name='SHA')
 
     class Meta:
         db_table = 'nhl_player_goalie_stat'
@@ -189,7 +188,7 @@ class NHLPlayerGoalieStat(db.Model):
 class NHLMatchEvent(db.Model):
     season = CharField()
     game = IntegerField()
-    number = IntegerField('#')
+    number = IntegerField(verbose_name='#')
     period = IntegerField()
     strength = CharField(null=True)
     elapsed = IntegerField()
@@ -214,55 +213,56 @@ class League(db.Model):
     name = CharField()
     acronym = CharField(unique=True)
     description = TextField(null=True)
-    commissioner = ForeignKeyField(User)
+    commissioner = ForeignKeyField(User, related_name='commish_leagues')
     public = BooleanField(default=True)
-
-    def __unicode__(self):
-        return '%s (%s)' % (self.name, self.acronym)
+    password = CharField(null=True)
 
     class Meta:
         order_by = ('name',)
 
+    def __unicode__(self):
+        return '%s (%s)' % (self.name, self.acronym)
+
 
 class Team(db.Model):
     nhl_team = ForeignKeyField(NHLTeam)
-    league = ForeignKeyField(League)
-    gm = ForeignKeyField(User)
-
-    def __unicode__(self):
-        return '%s (%s)' % (unicode(self.nhl_team),
-                               unicode(self.league))
+    league = ForeignKeyField(League, related_name='teams')
+    gm = ForeignKeyField(User, related_name='managed_teams',
+                         verbose_name='General Manager')
 
     class Meta:
         order_by = ('league',)
 
+    def __unicode__(self):
+        return '%s (%s)' % (self.nhl_team, self.league)
+
 
 class Season(db.Model):
-    league = ForeignKeyField(League)
+    league = ForeignKeyField(League, related_name='seasons')
     year = IntegerField(default=1)
-
-    def __unicode__(self):
-        return '%s - Year %d' % (unicode(self.league), self.year)
 
     class Meta:
         order_by = ('-year',)
 
+    def __unicode__(self):
+        return '%s - Year %d' % (self.league, self.year)
+
 
 class Match(db.Model):
-    season = ForeignKeyField(Season)
+    season = ForeignKeyField(Season, related_name='matches')
     day = IntegerField()
     game = IntegerField()
-    home = ForeignKeyField(Team, related_name='home')
-    road = ForeignKeyField(Team, related_name='road')
+    home = ForeignKeyField(Team, related_name='home_games')
+    road = ForeignKeyField(Team, related_name='road_games')
+
+    class Meta:
+        order_by = ('day', 'game')
 
     def __unicode__(self):
         return 'Day %d Game %d (%s @ %s)' % (self.day,
                                              self.game,
                                              self.road,
                                              self.home)
-
-    class Meta:
-        order_by = ('day', 'game')
 
 
 class Player(db.Model):
@@ -277,19 +277,19 @@ class Player(db.Model):
                 ('farm', 'Farm'),
                 ('prospect', 'Prospect')]
 
-    league = ForeignKeyField(League)
-    team = ForeignKeyField(Team)
+    league = ForeignKeyField(League, related_name='players')
+    team = ForeignKeyField(Team, related_name='players')
     nhl_player = ForeignKeyField(NHLPlayer)
-    pos = CharField(choices=self.POSITIONS, max_length=2)
-    status = CharField(choices=self.STATUSES, default='farm', max_length=8)
-    condition = IntegerField(default=100, max_length=3)
-    morale = IntegerField(default=100, max_length=3)
-
-    def __unicode__(self):
-        return unicode(self.nhl_player)
+    pos = CharField(choices=self.POSITIONS)
+    status = CharField(choices=self.STATUSES, default='farm')
+    condition = IntegerField(default=100)
+    morale = IntegerField(default=100)
 
     class Meta:
         order_by = ('status', 'pos')
+
+    def __unicode__(self):
+        return self.nhl_player
 
 
 class Line(db.Model):
@@ -299,26 +299,25 @@ class Line(db.Model):
                       ('lm', 'Last Minute'),
                       ('ex', 'Extra')]
 
-    match = ForeignKeyField(Match)
+    match = ForeignKeyField(Match, related_name='lines')
     team = ForeignKeyField(Team)
-    strength = CharField(choices=LINE_STRENGTHS, default='ev',
-                                max_length=2)
-    man = IntegerField(default=5, max_length=1)
-    number = IntegerField(default=1, max_length=1)
-    percent = IntegerField(default=20, max_length=2)
-    lw = ForeignKeyField(Player, null=True, related_name='lw')
-    c = ForeignKeyField(Player, null=True, related_name='c')
-    rw = ForeignKeyField(Player, null=True, related_name='rw')
-    f = ForeignKeyField(Player, null=True, related_name='f')
-    w = ForeignKeyField(Player, null=True, related_name='w')
-    ld = ForeignKeyField(Player, null=True, related_name='ld')
-    rd = ForeignKeyField(Player, null=True, related_name='rd')
-
-    def __unicode__(self):
-        return '%s %d %d' % (self.strength, self.man, self.number)
+    strength = CharField(choices=LINE_STRENGTHS, default='ev')
+    man = IntegerField(default=5)
+    number = IntegerField(default=1)
+    percent = IntegerField(default=20)
+    lw = ForeignKeyField(Player, null=True, verbose_name='Left Wing')
+    c = ForeignKeyField(Player, null=True, verbose_name='Center')
+    rw = ForeignKeyField(Player, null=True, verbose_name='Right Wing')
+    f = ForeignKeyField(Player, null=True, verbose_name='Forward')
+    w = ForeignKeyField(Player, null=True, verbose_name='Wing')
+    ld = ForeignKeyField(Player, null=True, verbose_name='Left Defense')
+    rd = ForeignKeyField(Player, null=True, verbose_name='Right Defense')
 
     class Meta:
         order_by = ('strength', 'man', '-number')
+
+    def __unicode__(self):
+        return '%s %d %d' % (self.strength, self.man, self.number)
 
 
 class Play(db.Model):
@@ -330,16 +329,19 @@ class Play(db.Model):
              ('neutral', 'Neutral'),
              ('road', 'Road')]
 
-    match = ForeignKeyField(Match)
+    match = ForeignKeyField(Match, related_name='plays')
     team = ForeignKeyField(Team)
-    period = IntegerField(max_length=1)
+    period = IntegerField()
     clock = IntegerField()
-    strength = CharField(choices=self.STRENGTHS, max_length=2)
-    play = CharField(max_length=15)
-    zone = CharField(choices=self.ZONES, max_length=7)
-    player1 = ForeignKeyField(Player, null=True, related_name='player1')
-    player2 = ForeignKeyField(Player, null=True, related_name='player2')
-    player3 = ForeignKeyField(Player, null=True, related_name='player3')
+    strength = CharField(choices=self.STRENGTHS)
+    play = CharField()
+    zone = CharField(choices=self.ZONES)
+    player1 = ForeignKeyField(Player, null=True)
+    player2 = ForeignKeyField(Player, null=True)
+    player3 = ForeignKeyField(Player, null=True)
+
+    class Meta:
+        order_by = ('-period', '-clock')
 
     def __unicode__(self):
         return 'Period %d %s - %s - %s - %s - %s' % (self.period,
@@ -352,6 +354,3 @@ class Play(db.Model):
     @property
     def elapsed(self):
         return format_time(self.clock)
-
-    class Meta:
-        order_by = ('-period', '-clock')
