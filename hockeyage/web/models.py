@@ -1,5 +1,7 @@
-from peewee import CharField, DateField, ForeignKeyField, IntegerField, \
-                   TextField
+from datetime import datetime
+
+from peewee import CharField, DateField, DateTimeField, ForeignKeyField, \
+                   IntegerField, TextField
 
 from hockeyage.game.clock import format_time
 from hockeyage.web import db
@@ -25,7 +27,7 @@ class NHLTeam(db.Model):
         order_by = ('city', 'name')
 
     def __unicode__(self):
-        return '%s %s' % (self.city, self.name)
+        return '{} {}'.format(self.city, self.name)
 
 
 class NHLSchedule(db.Model):
@@ -45,10 +47,10 @@ class NHLSchedule(db.Model):
         order_by = ['-name', 'type', 'game', 'day']
 
     def __unicode__(self):
-        return '%s %s Day %d Game %d' % (self.name,
-                                         self.type,
-                                         self.day,
-                                         self.game)
+        return '{} {} Day {} Game {}'.format(self.name,
+                                             self.type,
+                                             self.day,
+                                             self.game)
 
 
 class NHLPlayer(db.Model):
@@ -129,9 +131,9 @@ class NHLPlayerSkaterStat(db.Model):
         order_by = ('-year', 'team', 'league')
 
     def __unicode__(self):
-        return '%s %s (%s)' % (self.year,
-                               self.team,
-                               self.league)
+        return '{} {} ({})'.format(self.year,
+                                   self.team,
+                                   self.league)
 
     @property
     def ptspgp(self):
@@ -170,7 +172,7 @@ class NHLPlayerGoalieStat(db.Model):
         order_by = ('-year', 'team', 'league')
 
     def __unicode__(self):
-        return '%s %s (%s)' % (self.year, self.team, self.league)
+        return '{} {} ({})'.format(self.year, self.team, self.league)
 
     @property
     def gaa(self):
@@ -221,7 +223,7 @@ class League(db.Model):
         order_by = ('name',)
 
     def __unicode__(self):
-        return '%s (%s)' % (self.name, self.acronym)
+        return '{} ({})'.format(self.name, self.acronym)
 
 
 class Team(db.Model):
@@ -234,7 +236,7 @@ class Team(db.Model):
         order_by = ('league',)
 
     def __unicode__(self):
-        return '%s (%s)' % (self.nhl_team, self.league)
+        return '{} ({})'.format(self.nhl_team, self.league)
 
 
 class Season(db.Model):
@@ -245,7 +247,7 @@ class Season(db.Model):
         order_by = ('-year',)
 
     def __unicode__(self):
-        return '%s - Year %d' % (self.league, self.year)
+        return '{} Year {}'.format(self.league, self.year)
 
 
 class Match(db.Model):
@@ -259,10 +261,10 @@ class Match(db.Model):
         order_by = ('day', 'game')
 
     def __unicode__(self):
-        return 'Day %d Game %d (%s @ %s)' % (self.day,
-                                             self.game,
-                                             self.road,
-                                             self.home)
+        return 'Day {} Game {} ({} @ {})'.format(self.day,
+                                                 self.game,
+                                                 self.road,
+                                                 self.home)
 
 
 class Player(db.Model):
@@ -289,8 +291,20 @@ class Player(db.Model):
         order_by = ('status', 'pos')
 
     def __unicode__(self):
-        return self.nhl_player
+        return unicode(self.nhl_player)
 
+    @property
+    def stats(self):
+        if self.pos == 'g':
+            return self.goalie_stats
+        return self.skater_stats
+
+
+class Roster(db.Model):
+    match = ForeignKeyField(Match, related_name='rosters')
+    team = ForeignKeyField(Team)
+    player = ForeignKeyField(Player)
+ 
 
 class Line(db.Model):
     LINE_STRENGTHS = [('ev', 'Even Strength'),
@@ -317,7 +331,7 @@ class Line(db.Model):
         order_by = ('strength', 'man', '-number')
 
     def __unicode__(self):
-        return '%s %d %d' % (self.strength, self.man, self.number)
+        return '{} {} {}'.format(self.strength, self.man, self.number)
 
 
 class Play(db.Model):
@@ -344,13 +358,154 @@ class Play(db.Model):
         order_by = ('-period', '-clock')
 
     def __unicode__(self):
-        return 'Period %d %s - %s - %s - %s - %s' % (self.period,
-                                                     self.elapsed,
-                                                     self.strength,
-                                                     self.play,
-                                                     self.zone,
-                                                     self.player1)
+        return 'Period {} {} - {} - {} - {} - {}'.format(self.period,
+                                                         self.elapsed,
+                                                         self.strength,
+                                                         self.play,
+                                                         self.zone,
+                                                         self.player1)
 
     @property
     def elapsed(self):
         return format_time(self.clock)
+
+
+class SkaterStat(db.Model):
+    match = ForeignKeyField(Match, related_name='skater_stats')
+    player = ForeignKeyField(Player, related_name='skater_stats')
+    team = ForeignKeyField(Team, related_name='skater_stats')
+    g = IntegerField(null=True)
+    a = IntegerField(null=True)
+    d = IntegerField(null=True, verbose_name='+/-')
+    pim = IntegerField(null=True, verbose_name='PIM')
+    ppg = IntegerField(null=True, verbose_name='PPG')
+    ppa = IntegerField(null=True, verbose_name='PPA')
+    shg = IntegerField(null=True, verbose_name='SHG')
+    sha = IntegerField(null=True, verbose_name='SHA')
+    gwg = IntegerField(null=True, verbose_name='GWG')
+    gtg = IntegerField(null=True, verbose_name='GTG')
+    shots = IntegerField(null=True)
+    toi = IntegerField(null=True, verbose_name='TOI')
+    shifts = IntegerField(null=True)
+
+    class Meta:
+        db_table = 'skater_stat'
+        order_by = ('team', '-toi')
+
+    def __unicode__(self):
+        return ''.join(['{}G, '.format(self.g) if self.g else '',
+                        '{}A, '.format(self.a) if self.a else '',
+                        '{}PIM'.format(self.pim) if self.pim else ''])
+ 
+
+class GoalieStat(db.Model):
+    match = ForeignKeyField(Match, related_name='goalie_stats')
+    player = ForeignKeyField(Player, related_name='goalie_stats')
+    team = ForeignKey(Team, related_name='goalie_stats')
+    w = IntegerField(null=True)
+    l = IntegerField(null=True)
+    otl = IntegerField(null=True, verbose_name='OTL')
+    min = IntegerField(null=True)
+    so = IntegerField(null=True, verbose_name='SO')
+    ga = IntegerField(null=True, verbose_name='GA')
+    sha = IntegerField(null=True, verbose_name='SHA')
+
+    class Meta:
+        db_table = 'goalie_stat'
+        order_by = ('team', '-min')
+
+    def __unicode__(self):
+        return ''.join(['W, ' if self.w else '',
+                        'L, ' if self.l else '',
+                        'OTL, ' if self.otl else '',
+                        '{}SHA, '.format(self.sha) if self.sha else '',
+                        '{}GA'.format(self.ga) if self.ga else '',
+                        'SO' if self.so else ''])
+
+
+class Pick(db.Model):
+    owner = ForeignKeyField(Team, related_name='picks')
+    team = ForeignKeyField(Team)
+    season = ForeignKeyField(Season)
+    round = IntegerField()
+    overall = IntegerField(null=True)
+    player = ForeignKeyField(Player, null=True)
+
+    class Meta:
+        order_by = ['season', 'overall', 'round']
+
+    def __unicode__(self):
+        return 'Year {} Round {}'.format(self.season.year, self.round)
+
+
+class Trade(db.Model):
+    STATUSES = [('created', 'Created'),
+                ('proposed', 'Proposed'),
+                ('accepted', 'Accepted'),
+                ('rejected', 'Rejected'),
+                ('approved', 'Approved'),
+                ('disputed', 'Disputed'),
+                ('withdrawn', 'Withdrawn')]
+
+    from_team = ForeignKeyField(Team, related_name='trades_offered')
+    to_team = ForeignKeyField(Team, related_name='trades_received')
+    status = CharField(choies=self.STATUSES, default='created')
+    created = DateTimeField(default=datetime.utcnow)
+    proposed = DateTimeField(null=True)
+
+    class Meta:
+        order_by = ('-created',)
+
+    def __unicode__(self):
+        from_assets = []
+        from_players = self.players.where(TradePlayer.from_team == self.from_team)
+        from_assets.append(unicode(p.player) for p in from_players
+        from_picks = self.picks.where(TradePick.from_team == self.from_team)
+        from_assets.append(unicode(p.pick)) for p in from_picks
+
+        to_assets = []
+        to_players = self.players.where(TradePlayer.from_team == self.to_team)
+        to_assets.append(unicode(p.player) for p in to_players
+        to_picks = self.picks.where(TradePick.from_team == self.to_team)
+        to_assets.append(unicode(p.pick)) for p in from_picks
+
+        return '{} for {}'.format(', '.join(from_assets),
+                                  ', '.join(to_assets))
+
+    @property
+    def is_valid(self):
+        """
+        Ensure that the teams involved in the trade still own the players and
+        picks being traded.
+        """
+        for player in self.players:
+            if player.from_team != player.player.team:
+                return False
+        for pick in self.picks:
+            if pick.from_team != pick.pick.owner:
+                return False
+        return True
+
+
+class TradePlayer(db.Model):
+    trade = ForeignKeyField(Trade, related_name='players')
+    from_team = ForeignKeyField(Team)
+    player = ForeignKeyField(Player)
+
+    class Meta:
+        db_table = 'trade_player'
+
+    def __unicode__(self):
+        return unicode(self.player)
+
+
+class TradePick(db.Model):
+    trade = ForeignKeyField(Trade, related_name='picks')
+    from_team = ForeignKeyField(Team)
+    pick = ForeignKeyField(Pick)
+
+    class Meta:
+        db_table = 'trade_pick'
+
+    def __unicode__(self):
+        return unicode(self.pick)
