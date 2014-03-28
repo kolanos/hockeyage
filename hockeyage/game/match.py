@@ -21,13 +21,15 @@ class Match(object):
         self.show_events = show_events
 
         self.event = Event()
-        self.play = Play()
 
         self.home = Team('Calgary Flames', 'CGY')
         self.road = Team('Edmonton Oilers', 'EDM')
 
+        self.play = Play(self.home, self.road)
+
         self.period = 0
         self.zone = 0
+
         self.start_period()
 
     def start_period(self):

@@ -4,7 +4,10 @@ from hockeyage.util import probability
 class Play(object):
     last_play = None
 
-    def __init__(self):
+    def __init__(self, home, road):
+        self.home = home
+        self.road = road
+
         self.next_play = probability.weighted_choice_compile([('shot', 24),
                                                               ('stop', 20),
                                                               ('hit', 14),
