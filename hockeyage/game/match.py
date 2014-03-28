@@ -35,7 +35,7 @@ class Match(object):
     def start_period(self):
         self.period += 1
         self.clock = Clock(self.period, PERIOD_LENGTH, OVERTIME_LENGTH)
-        self.play = Play()
+        self.play = Play(self.zone)
         self.event.add(self.period, self.clock, 'start', zone(self.zone))
         self.event.add(self.period, self.clock, self.play(), zone(self.zone))
         while self.clock.running:

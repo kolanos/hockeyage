@@ -7,6 +7,7 @@ class Play(object):
     def __init__(self, home, road):
         self.home = home
         self.road = road
+        self.zone = 0
 
         self.next_play = probability.weighted_choice_compile([('shot', 24),
                                                               ('stop', 20),
@@ -18,11 +19,14 @@ class Play(object):
                                                               ('take', 5),
                                                               ('goal', 2)])
 
-    def __call__(self):
+    def __call__(self, zone):
+        self.zone = zone
+
         if self.last_play is None:
-            self.last_play = 'face'
+            self.last_play = self.face()
         else:
             self.last_play = getattr(self, self.last_play)()
+
         return self.last_play
 
     def start(self):
@@ -53,9 +57,23 @@ class Play(object):
         return self.next_play()
 
     def give(self):
+        if self.home.has_possession:
+            self.home.lose_possession()
+            self.road.gain_possession()
+        else:
+            self.home.gain_possession()
+            self.road.lose_possession()
+
         return self.next_play()
 
     def take(self):
+        if self.home.has_possession:
+            self.home.lose_possession()
+            self.road.gain_possession()
+        else:
+            self.home.gain_possession()
+            self.road.lose_possession()
+
         return self.next_play()
 
     def hit(self):

@@ -9,6 +9,14 @@ class Team(object):
         self.abbreviation = abbreviation
         self.lineup = Lineup()
 
+        self.has_possesion = False
+
+    def gain_possession(self):
+        self.has_possession = True
+
+    def lose_possession(self):
+        self.has_possession = False
+
 
 class Lineup(object):
     def __init__(self, lineup=None):
@@ -82,6 +90,7 @@ class Lines(object):
 
         for defense in self.current_line['defense']:
             defense['toi'] += toi
+
         self.current_goalie['toi'] += toi
 
     @property
