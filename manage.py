@@ -1,10 +1,14 @@
-#!/usr/bin/env python
-import os
-import sys
+from flask.ext.script import Manager
 
+from hockeyage.web import app
+
+manager = Manager(app)
+
+
+@manager.command
+def hello():
+    print "hello"
+ear
+cd 
 if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hockeyage.settings")
-
-    from django.core.management import execute_from_command_line
-
-    execute_from_command_line(sys.argv)
+    manager.run()
