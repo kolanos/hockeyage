@@ -4,19 +4,11 @@ from hockeyage.game.play import Play
 from hockeyage.game.team import Team
 from hockeyage.util import probability
 
-PERIOD_LENGTH = 1200
-OVERTIME_LENGTH = 300
-
-
-def zone(z):
-    if z > 0:
-        return 'HOME'
-    if z < 0:
-        return 'ROAD'
-    return 'NEUTRAL'
-
 
 class Match(object):
+    PERIOD_LENGTH = 1200
+    OVERTIME_LENGTH = 300
+
     def __init__(self, show_events=False):
         self.show_events = show_events
 
@@ -25,25 +17,25 @@ class Match(object):
         self.home = Team('Calgary Flames', 'CGY')
         self.road = Team('Edmonton Oilers', 'EDM')
 
-        self.play = Play(self.home, self.road)
-
         self.period = 0
-        self.zone = 0
+        self.zone = Zone()
 
         self.start_period()
 
     def start_period(self):
         self.period += 1
-        self.clock = Clock(self.period, PERIOD_LENGTH, OVERTIME_LENGTH)
-        self.play = Play(self.zone)
-        self.event.add(self.period, self.clock, 'start', zone(self.zone))
-        self.event.add(self.period, self.clock, self.play(), zone(self.zone))
+        self.clock = Clock(self.period, self.PERIOD_LENGTH, self.OVERTIME_LENGTH)
+        self.play = Play(self.home, self.road, self.zone)
+
+        self.event.add(self.period, self.clock, 'start', self.zone.name)
+        self.event.add(self.period, self.clock, self.play().name, self.zone.name)
+
         while self.clock.running:
             self.next_event()
 
     def end_period(self):
         self.clock.end()
-        self.event.add(self.period, self.clock, 'end', zone(self.zone))
+        self.event.add(self.period, self.clock, 'end', self.zone.name)
         if self.period < 3:
             self.start_period()
         else:
@@ -61,20 +53,34 @@ class Match(object):
             self.home.lineup.lines.line_change()
             self.road.lineup.lines.line_change()
 
-            advance_choices = [(-1, self.road.lineup.lines.average_rating),
-                               (1, self.home.lineup.lines.average_rating)]
-            advance = probability.weighted_choice(advance_choices)
-            self.zone += advance
-            if self.zone > 0:
-                self.zone = 1
-            elif self.zone < 0:
-                self.zone = -1
-
             self.event.add(self.period,
                            self.clock,
-                           self.play(),
-                           zone(self.zone))
+                           self.play().name,
+                           self.zone.name)
 
     def end_game(self):
         if self.show_events:
             self.event.show()
+
+
+class Zone(object):
+    def __init__(self):
+        self.zone = 0
+
+    @property
+    def name(self):
+        if self.zone > 0:
+            return 'HOME'
+        if self.zone < 0:
+            return 'ROAD'
+        return 'NEUTRAL'
+
+    def center_ice(self):
+        self.zone = 0
+
+    def advance(self, advance):
+        self.zone += advance
+        if self.zone > 0:
+            self.zone = 1
+        elif self.zone < 0:
+            self.zone = -1

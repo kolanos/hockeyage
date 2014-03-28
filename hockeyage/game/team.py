@@ -9,7 +9,7 @@ class Team(object):
         self.abbreviation = abbreviation
         self.lineup = Lineup()
 
-        self.has_possesion = False
+        self.has_possession = False
 
     def gain_possession(self):
         self.has_possession = True

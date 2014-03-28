@@ -8,7 +8,7 @@ def format_time(seconds):
 
 
 class Clock(object):
-    MAX_TICK_INTERVAL = 25
+    MAX_TICK_INTERVAL = 12
 
     def __init__(self, period=1, period_length=1200, overtime_length=300):
         self.clock = 0
