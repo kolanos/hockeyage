@@ -77,11 +77,11 @@ class Lines(object):
 
     def add_toi(self, toi):
         for forward in self.current_line['forward']:
-            forward['toi'] = forward['toi'] + toi
+            forward['toi'] += toi
 
         for defense in self.current_line['defense']:
-            defense['toi'] = defense['toi'] + toi
-        self.current_goalie['toi'] = self.current_goalie['toi'] + toi
+            defense['toi'] += toi
+        self.current_goalie['toi'] += toi
 
     @property
     def average_rating(self):
