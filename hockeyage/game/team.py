@@ -8,7 +8,7 @@ class Team(object):
         self.name = name
         self.abbreviation = abbreviation
         self.lineup = Lineup()
-
+        self.lines = self.lineup.lines
         self.has_possession = False
 
     def gain_possession(self):
@@ -95,20 +95,50 @@ class Lines(object):
 
     @property
     def average_rating(self):
+        """The average rating for all players on the ice."""
         ratings = [p['overall'] for p in self.current_line['forward'] +
                                          self.current_line['defense']]
         return sum(ratings) / len(ratings)
 
     @property
     def forward_rating(self):
+        """The average rating of the forwards on the ice."""
         ratings = [p['overall'] for p in self.current_line['forward']]
         return sum(ratings) / len(ratings)
 
     @property
     def defense_rating(self):
+        """The average rating for defenseman on the ice."""
         ratings = [p['overall'] for p in self.current_line['defense']]
         return sum(ratings) / len(ratings)
 
+    def weighted_choice(self, attribute='overall', exclude=None):
+        """Select a player on the ice weighted by a player' attribute."""
+        choices = [(p, p[attribute]) for p in self.current_line['forward'] +
+                                              self.current_line['defense']
+                                     if exclude is None or p not in exclude]
+        return probability.weighted_choice(choices)
+
+    def weighted_forward(self, attribute='overall', exclude=None):
+        """Select a forward on the ice, weighted by a player's attribute."""
+        choices = [(p, p[attribute]) for p in self.current_line['forward']
+                                     if exclude is None or p not in exclude]
+        return probability.weighted_choice(choices)
+
+    def weighted_defense(self, attribute='overall', exclude=None):
+        """
+        Select a defenseman on the ice, weighted by a player's attribute.
+        """
+        choices = [(p, p[attribute]) for p in self.current_line['defense']
+                                     if exclude is None or p not in exclude]
+        return probability.weighted_choice(choices)
+
+    def forward_by_pos(self, pos):
+        positions = {'LW': 0, 'C': 1, 'RW': 2}
+        return self.current_line['forward'][positions[pos]]
+
 
 class Player(dotdict):
-    pass
+    """Player container, currently only a dict."""
+    def __str__(self):
+        return str(id(self))[:-4]

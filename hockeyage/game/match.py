@@ -27,15 +27,15 @@ class Match(object):
         self.clock = Clock(self.period, self.PERIOD_LENGTH, self.OVERTIME_LENGTH)
         self.play = Play(self.home, self.road, self.zone)
 
-        self.event.add(self.period, self.clock, 'start', self.zone.name)
-        self.event.add(self.period, self.clock, self.play().name, self.zone.name)
+        self.event.add(self.period, self.clock, self.play(), self.zone.name)
+        self.event.add(self.period, self.clock, self.play(), self.zone.name)
 
         while self.clock.running:
             self.next_event()
 
     def end_period(self):
         self.clock.end()
-        self.event.add(self.period, self.clock, 'end', self.zone.name)
+        self.event.add(self.period, self.clock, self.play.end(), self.zone.name)
         if self.period < 3:
             self.start_period()
         else:
@@ -55,7 +55,7 @@ class Match(object):
 
             self.event.add(self.period,
                            self.clock,
-                           self.play().name,
+                           self.play(),
                            self.zone.name)
 
     def end_game(self):
@@ -64,16 +64,20 @@ class Match(object):
 
 
 class Zone(object):
+    NEUTRAL = 'neutral'
+    HOME = 'home'
+    ROAD = 'road'
+
     def __init__(self):
         self.zone = 0
 
     @property
     def name(self):
         if self.zone > 0:
-            return 'HOME'
+            return self.HOME
         if self.zone < 0:
-            return 'ROAD'
-        return 'NEUTRAL'
+            return self.ROAD
+        return self.NEUTRAL
 
     def center_ice(self):
         self.zone = 0

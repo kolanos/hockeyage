@@ -22,7 +22,7 @@ class Play(object):
 
     def __call__(self):
         if self.last_play is None:
-            self.last_play = self.face()
+            self.last_play = Start(self.home, self.road, self.zone)
         else:
             self.last_play = getattr(self, self.last_play.name)()
         return self.last_play
@@ -39,6 +39,45 @@ class Play(object):
         take_base = self.TAKE_BASELINE
         goal_base = self.GOAL_BASELINE
 
+        if self.zone.name == self.zone.NEUTRAL:
+            shot_base = 1
+            block_base = 1
+            miss_base = 1
+            goal_base = 0
+
+        # Loose puck, battle for possession.
+        if not self.home.has_possession and not self.road.has_possession:
+            takes_it = [('home', self.home.lineup.lines.average_rating),
+                        ('road', self.home.lineup.lines.average_rating)]
+            takes_it = weighted_choice(takes_it)
+            if takes_it == 'home':
+                self.home.gain_possession()
+            if takes_it == 'road':
+                self.road.gain_possession()
+
+        if self.home.has_possession:
+            # If badly outclassed the chance exists for rapid puck movement.
+            breakaway = self.home.lineup.lines.average_rating - self.road.lineup.lines.average_rating
+            if breakaway < 0:
+                breakaway = 0
+
+            advance = [(0, self.road.lineup.lines.average_rating),
+                       (1, self.home.lineup.lines.average_rating),
+                       (2, breakaway)]
+            advance = weighted_choice(advance)
+            self.zone.advance(advance)
+
+        if self.road.has_possession:
+            breakaway = self.road.lineup.lines.average_rating - self.home.lineup.lines.average_rating
+            if breakaway < 0:
+                breakaway = 0
+
+            advance = [(0, self.home.lineup.lines.average_rating),
+                       (-1, self.road.lineup.lines.average_rating),
+                       (-2, breakaway)]
+            advance = weighted_choice(advance)
+            self.zone.advance(advance)
+
         return weighted_choice(((Pass, pass_base),
                                 (Shot, shot_base),
                                 (Stop, stop_base),
@@ -54,7 +93,7 @@ class Play(object):
         return Face(self.home, self.road, self.zone)
 
     def end(self):
-        return Start(self.home, self.road, self.zone)
+        return End(self.home, self.road, self.zone)
 
     def stop(self):
         return Face(self.home, self.road, self.zone)
@@ -91,6 +130,12 @@ class Play(object):
 
 
 class PlayType(object):
+    name = None
+    player1 = None
+    player2 = None
+    player3 = None
+    extra = None
+
     def __init__(self, home, road, zone):
         self.home = home
         self.road = road
@@ -135,6 +180,18 @@ class Goal(PlayType):
     def __init__(self, home, road, zone):
         super(Goal, self).__init__(home, road, zone)
 
+        scoring_team = self.home if self.zone.name == 'HOME' else self.road
+        scoring_team = scoring_team.lineup.lines
+
+        self.player1 = scoring_team.weighted_choice()
+
+        num_assists = weighted_choice([(0, 10), (1, 20), (2, 70)])
+        if num_assists > 0:
+            self.player2 = scoring_team.weighted_choice(exclude=[self.player1])
+        if num_assists > 1:
+            self.player3 = scoring_team.weighted_choice(exclude=[self.player1,
+                                                                 self.player2])
+
 
 class Penalty(PlayType):
     name = 'penalty'
@@ -148,6 +205,31 @@ class Face(PlayType):
 
     def __init__(self, home, road, zone):
         super(Face, self).__init__(home, road, zone)
+
+        home_face = self.home.lines.forward_by_pos('C')
+        road_face = self.road.lines.forward_by_pos('C')
+
+        # Tossed from the faceoff circle?
+        if weighted_choice([(True, 20), (False, 80)]):
+            home_face = self.home.lines.weighted_forward(exclude=[home_face])
+        if weighted_choice([(True, 20), (False, 80)]):
+            road_face = self.road.lines.weighted_forward(exclude=[road_face])
+
+        winner = weighted_choice([('home', home_face['overall']),
+                                  ('road', road_face['overall'])])
+
+        if winner == 'home':
+            self.player1 = home_face
+            self.player2 = road_face
+
+            self.home.gain_possession()
+            self.road.lose_possession()
+        else:
+            self.player1 = road_face
+            self.player2 = home_face
+
+            self.home.lose_possession()
+            self.road.gain_possession()
 
 
 class Shot(PlayType):
@@ -177,6 +259,15 @@ class Give(PlayType):
     def __init__(self, home, road, zone):
         super(Give, self).__init__(home, road, zone)
 
+        giving = self.home if self.road.has_possession else self.road
+        taking = self.road if giving == self.home else self.home
+
+        self.player1 = giving.lines.weighted_choice()
+        self.player2 = taking.lines.weighted_choice()
+
+        giving.lose_possession()
+        taking.gain_possession()
+
 
 class Take(PlayType):
     name = 'take'
@@ -184,9 +275,29 @@ class Take(PlayType):
     def __init__(self, home, road, zone):
         super(Take, self).__init__(home, road, zone)
 
+        taking = self.home if self.road.has_possession else self.road
+        giving = self.road if taking == self.home else self.home
+
+        self.player1 = taking.lines.weighted_choice()
+        self.player2 = giving.lines.weighted_choice()
+
+        taking.gain_possession()
+        giving.lose_possession()
+
 
 class Hit(PlayType):
     name = 'hit'
 
     def __init__(self, home, road, zone):
         super(Hit, self).__init__(home, road, zone)
+
+        hitter = self.road if self.home.has_possession else self.home
+        hittee = self.home if hitter == self.road else self.road
+
+        self.player1 = hitter.lines.weighted_choice()
+        self.player2 = hittee.lines.weighted_choice()
+
+        # Oversimpliciation
+        if self.player1.overall > self.player2.overall:
+            hitter.gain_possession()
+            hittee.lose_possession()
