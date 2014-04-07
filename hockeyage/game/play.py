@@ -13,12 +13,13 @@ class Play(object):
     TAKE_BASELINE = 2
     GOAL_BASELINE = 1
 
-    def __init__(self, home, road, zone):
+    def __init__(self, home, road, zone, possession):
         self.last_play = None
 
         self.home = home
         self.road = road
         self.zone = zone
+        self.possession = possession
 
     def __call__(self):
         if self.last_play is None:
@@ -46,34 +47,31 @@ class Play(object):
             goal_base = 0
 
         # Loose puck, battle for possession.
-        if not self.home.has_possession and not self.road.has_possession:
-            takes_it = [('home', self.home.lineup.lines.average_rating),
-                        ('road', self.home.lineup.lines.average_rating)]
+        if not self.possession.has_possession:
+            takes_it = [(self.home, self.home.lines.average_rating),
+                        (self.road, self.home.lines.average_rating)]
             takes_it = weighted_choice(takes_it)
-            if takes_it == 'home':
-                self.home.gain_possession()
-            if takes_it == 'road':
-                self.road.gain_possession()
+            self.possession.gain_possession(takes_it)
 
-        if self.home.has_possession:
+        if self.possession.has_possession == self.home:
             # If badly outclassed the chance exists for rapid puck movement.
-            breakaway = self.home.lineup.lines.average_rating - self.road.lineup.lines.average_rating
+            breakaway = self.home.lines.average_rating - self.road.lines.average_rating
             if breakaway < 0:
                 breakaway = 0
 
-            advance = [(0, self.road.lineup.lines.average_rating),
-                       (1, self.home.lineup.lines.average_rating),
+            advance = [(0, self.road.lines.average_rating),
+                       (1, self.home.lines.average_rating),
                        (2, breakaway)]
             advance = weighted_choice(advance)
             self.zone.advance(advance)
 
-        if self.road.has_possession:
-            breakaway = self.road.lineup.lines.average_rating - self.home.lineup.lines.average_rating
+        if self.possession.has_possession == self.road:
+            breakaway = self.road.lines.average_rating - self.home.lines.average_rating
             if breakaway < 0:
                 breakaway = 0
 
-            advance = [(0, self.home.lineup.lines.average_rating),
-                       (-1, self.road.lineup.lines.average_rating),
+            advance = [(0, self.home.lines.average_rating),
+                       (-1, self.road.lines.average_rating),
                        (-2, breakaway)]
             advance = weighted_choice(advance)
             self.zone.advance(advance)
@@ -148,8 +146,7 @@ class Start(PlayType):
     def __init__(self, home, road, zone):
         super(Start, self).__init__(home, road, zone)
 
-        self.home.lose_possession()
-        self.road.lose_possession()
+        self.possession.loose_puck()
         self.zone.center_ice()
 
 
@@ -163,8 +160,7 @@ class Stop(PlayType):
     def __init__(self, home, road, zone):
         super(Stop, self).__init__(home, road, zone)
 
-        self.home.lose_possession()
-        self.road.lose_possession()
+        self.possession.loose_puck()
 
 
 class Pass(PlayType):
@@ -180,8 +176,9 @@ class Goal(PlayType):
     def __init__(self, home, road, zone):
         super(Goal, self).__init__(home, road, zone)
 
-        scoring_team = self.home if self.zone.name == 'HOME' else self.road
-        scoring_team = scoring_team.lineup.lines
+        scoring_team = self.home if self.zone.name == self.zone.HOME \
+                                 else self.road
+        scoring_team = scoring_team.lines
 
         self.player1 = scoring_team.weighted_choice()
 
@@ -215,21 +212,19 @@ class Face(PlayType):
         if weighted_choice([(True, 20), (False, 80)]):
             road_face = self.road.lines.weighted_forward(exclude=[road_face])
 
-        winner = weighted_choice([('home', home_face['overall']),
-                                  ('road', road_face['overall'])])
+        winner = weighted_choice([(self.home, home_face['overall']),
+                                  (self.road, road_face['overall'])])
 
-        if winner == 'home':
+        if winner == self.home:
             self.player1 = home_face
             self.player2 = road_face
 
-            self.home.gain_possession()
-            self.road.lose_possession()
+            self.possession.gain_possession(self.home)
         else:
             self.player1 = road_face
             self.player2 = home_face
 
-            self.home.lose_possession()
-            self.road.gain_possession()
+            self.possession.gain_possession(self.road)
 
 
 class Shot(PlayType):
@@ -259,14 +254,14 @@ class Give(PlayType):
     def __init__(self, home, road, zone):
         super(Give, self).__init__(home, road, zone)
 
-        giving = self.home if self.road.has_possession else self.road
+        giving = self.home if self.possession.has_possession == sel.road \
+                           else self.road
         taking = self.road if giving == self.home else self.home
 
         self.player1 = giving.lines.weighted_choice()
         self.player2 = taking.lines.weighted_choice()
 
-        giving.lose_possession()
-        taking.gain_possession()
+        self.possession.gain_possession(taking)
 
 
 class Take(PlayType):
@@ -275,14 +270,14 @@ class Take(PlayType):
     def __init__(self, home, road, zone):
         super(Take, self).__init__(home, road, zone)
 
-        taking = self.home if self.road.has_possession else self.road
+        taking = self.home if self.possession.has_possession == self.road \
+                           else self.road
         giving = self.road if taking == self.home else self.home
 
         self.player1 = taking.lines.weighted_choice()
         self.player2 = giving.lines.weighted_choice()
 
-        taking.gain_possession()
-        giving.lose_possession()
+        self.possession.gain_possession(taking)
 
 
 class Hit(PlayType):
@@ -291,7 +286,8 @@ class Hit(PlayType):
     def __init__(self, home, road, zone):
         super(Hit, self).__init__(home, road, zone)
 
-        hitter = self.road if self.home.has_possession else self.home
+        hitter = self.road if self.possession.has_possession == self.home \
+                           else self.home
         hittee = self.home if hitter == self.road else self.road
 
         self.player1 = hitter.lines.weighted_choice()
@@ -299,5 +295,4 @@ class Hit(PlayType):
 
         # Oversimpliciation
         if self.player1.overall > self.player2.overall:
-            hitter.gain_possession()
-            hittee.lose_possession()
+            self.possession.gain_possession(hitter)

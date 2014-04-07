@@ -8,14 +8,9 @@ class Team(object):
         self.name = name
         self.abbreviation = abbreviation
         self.lineup = Lineup()
+
+        # Shortcut
         self.lines = self.lineup.lines
-        self.has_possession = False
-
-    def gain_possession(self):
-        self.has_possession = True
-
-    def lose_possession(self):
-        self.has_possession = False
 
 
 class Lineup(object):

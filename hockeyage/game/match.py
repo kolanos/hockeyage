@@ -6,9 +6,6 @@ from hockeyage.util import probability
 
 
 class Match(object):
-    PERIOD_LENGTH = 1200
-    OVERTIME_LENGTH = 300
-
     def __init__(self, show_events=False):
         self.show_events = show_events
 
@@ -17,15 +14,16 @@ class Match(object):
         self.home = Team('Calgary Flames', 'CGY')
         self.road = Team('Edmonton Oilers', 'EDM')
 
-        self.period = 0
-        self.zone = Zone()
-
+        self.period = Period()
         self.start_period()
 
     def start_period(self):
-        self.period += 1
-        self.clock = Clock(self.period, self.PERIOD_LENGTH, self.OVERTIME_LENGTH)
-        self.play = Play(self.home, self.road, self.zone)
+        self.period.next_period()
+        self.clock = Clock(self.period)
+        self.zone = Zone()
+        self.possession = Possession()
+
+        self.play = Play(self.home, self.road, self.zone, self.possession)
 
         self.event.add(self.period, self.clock, self.play(), self.zone.name)
         self.event.add(self.period, self.clock, self.play(), self.zone.name)
@@ -63,6 +61,14 @@ class Match(object):
             self.event.show()
 
 
+class Period(object):
+    def __init__(self):
+        self.period = 0
+
+    def next_period(self):
+        self.period += 1
+
+
 class Zone(object):
     NEUTRAL = 'neutral'
     HOME = 'home'
@@ -88,3 +94,19 @@ class Zone(object):
             self.zone = 1
         elif self.zone < 0:
             self.zone = -1
+
+
+class Possession(object):
+    def __init__(self):
+        self.has_possession = None
+        self.has_puck = None
+
+    def gain_possession(self, possession, player=None):
+        self.has_possession = possession
+        self.has_puck = player
+
+        if not self.has_puck:
+            self.has_puck = self.possession.lines.weighted_vhoice()
+
+    def loose_puck(self):
+        self.has_possession = None

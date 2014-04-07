@@ -8,12 +8,15 @@ def format_time(seconds):
 
 
 class Clock(object):
+    PERIOD_LENGTH = 1200
+    OVERTIME_LENGTH = 300
     MAX_TICK_INTERVAL = 12
 
-    def __init__(self, period=1, period_length=1200, overtime_length=300):
+    def __init__(self, period):
         self.clock = 0
         self.last_tick = 0
-        self.total_time = period_length if period < 4 else overtime_length
+        self.total_time = self.PERIOD_LENGTH if period.period < 4 \
+                                            else self.OVERTIME_LENGTH
 
     def tick(self, interval=None):
         self.last_tick = self.clock
