@@ -25,15 +25,15 @@ class Match(object):
 
         self.play = Play(self.home, self.road, self.zone, self.possession)
 
-        self.event.add(self.period, self.clock, self.play(), self.zone.name)
-        self.event.add(self.period, self.clock, self.play(), self.zone.name)
+        self.event.add(self.period, self.clock, self.play(), self.zone)
+        self.event.add(self.period, self.clock, self.play(), self.zone)
 
         while self.clock.running:
             self.next_event()
 
     def end_period(self):
         self.clock.end()
-        self.event.add(self.period, self.clock, self.play.end(), self.zone.name)
+        self.event.add(self.period, self.clock, self.play.end(), self.zone)
         if self.period < 3:
             self.start_period()
         else:
@@ -54,7 +54,7 @@ class Match(object):
             self.event.add(self.period,
                            self.clock,
                            self.play(),
-                           self.zone.name)
+                           self.zone)
 
     def end_game(self):
         if self.show_events:

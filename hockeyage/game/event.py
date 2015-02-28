@@ -14,15 +14,15 @@ class Event(object):
         self.event += 1
 
         self.plays[play.name] += 1
-        self.zones[zone] += 1
+        self.zones[zone.name] += 1
 
         self.events.append({'event': self.event,
-                            'period': period,
+                            'period': period.period,
                             'elapsed': clock.elapsed,
                             'remaining': clock.remaining,
                             'since': clock.since_last_tick,
                             'play': play.name,
-                            'zone': zone,
+                            'zone': zone.name,
                             'player1': play.player1,
                             'player2': play.player2,
                             'player3': play.player3})
