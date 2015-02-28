@@ -23,7 +23,8 @@ class Play(object):
 
     def __call__(self):
         if self.last_play is None:
-            self.last_play = Start(self.home, self.road, self.zone)
+            self.last_play = Start(self.home, self.road, self.zone,
+                                   self.possession)
         else:
             self.last_play = getattr(self, self.last_play.name)()
         return self.last_play
@@ -88,43 +89,45 @@ class Play(object):
                                 (Goal, goal_base)))
 
     def start(self):
-        return Face(self.home, self.road, self.zone)
+        return Face(self.home, self.road, self.zone, self.possession)
 
     def end(self):
-        return End(self.home, self.road, self.zone)
+        return End(self.home, self.road, self.zone, self.possession)
 
     def stop(self):
-        return Face(self.home, self.road, self.zone)
+        return Face(self.home, self.road, self.zone, self.possession)
 
     def goal(self):
-        return Face(self.home, self.road, self.zone)
+        return Face(self.home, self.road, self.zone, self.possession)
 
     def penalty(self):
-        return Face(self.home, self.road, self.zone)
+        return Face(self.home, self.road, self.zone, self.possession)
 
     def _pass(self):
-        return self.next_play()(self.home, self.road, self.zone)
+        return self.next_play()(self.home, self.road, self.zone,
+                self.possession)
 
     def face(self):
-        return self.next_play()(self.home, self.road, self.zone)
+        return self.next_play()(self.home, self.road, self.zone,
+                                self.possession)
 
     def shot(self):
-        return self.next_play()(self.home, self.road, self.zone)
+        return self.next_play()(self.home, self.road, self.zone, self.possession)
 
     def miss(self):
-        return self.next_play()(self.home, self.road, self.zone)
+        return self.next_play()(self.home, self.road, self.zone, self.possession)
 
     def block(self):
-        return self.next_play()(self.home, self.road, self.zone)
+        return self.next_play()(self.home, self.road, self.zone, self.possession)
 
     def give(self):
-        return self.next_play()(self.home, self.road, self.zone)
+        return self.next_play()(self.home, self.road, self.zone, self.possession)
 
     def take(self):
-        return self.next_play()(self.home, self.road, self.zone)
+        return self.next_play()(self.home, self.road, self.zone, self.possession)
 
     def hit(self):
-        return self.next_play()(self.home, self.road, self.zone)
+        return self.next_play()(self.home, self.road, self.zone, self.possession)
 
 
 class PlayType(object):
@@ -134,20 +137,22 @@ class PlayType(object):
     player3 = None
     extra = None
 
-    def __init__(self, home, road, zone):
+    def __init__(self, home, road, zone, possession):
         self.home = home
         self.road = road
         self.zone = zone
+        self.possession = possession
+
+    def result(self):
+        pass
 
 
 class Start(PlayType):
     name = 'start'
 
-    def __init__(self, home, road, zone):
-        super(Start, self).__init__(home, road, zone)
-
-        self.possession.loose_puck()
+    def result(self):
         self.zone.center_ice()
+        self.possession.loose_puck()
 
 
 class End(Start):
@@ -157,25 +162,18 @@ class End(Start):
 class Stop(PlayType):
     name = 'stop'
 
-    def __init__(self, home, road, zone):
-        super(Stop, self).__init__(home, road, zone)
-
+    def result(self):
         self.possession.loose_puck()
 
 
 class Pass(PlayType):
     name = '_pass'
 
-    def __init__(self, home, road, zone):
-        super(Pass, self).__init__(home, road, zone)
-
 
 class Goal(PlayType):
     name = 'goal'
 
-    def __init__(self, home, road, zone):
-        super(Goal, self).__init__(home, road, zone)
-
+    def result(self):
         scoring_team = self.home if self.zone.name == self.zone.HOME \
                                  else self.road
         scoring_team = scoring_team.lines
@@ -193,16 +191,11 @@ class Goal(PlayType):
 class Penalty(PlayType):
     name = 'penalty'
 
-    def __init__(self, home, road, zone):
-        super(Penalty, self).__init__(home, road, zone)
-
 
 class Face(PlayType):
     name = 'face'
 
-    def __init__(self, home, road, zone):
-        super(Face, self).__init__(home, road, zone)
-
+    def result(self):
         home_face = self.home.lines.forward_by_pos('C')
         road_face = self.road.lines.forward_by_pos('C')
 
@@ -230,30 +223,19 @@ class Face(PlayType):
 class Shot(PlayType):
     name = 'shot'
 
-    def __init__(self, home, road, zone):
-        super(Shot, self).__init__(home, road, zone)
-
 
 class Miss(PlayType):
     name = 'miss'
-
-    def __init__(self, home, road, zone):
-        super(Miss, self).__init__(home, road, zone)
 
 
 class Block(PlayType):
     name = 'block'
 
-    def __init__(self, home, road, zone):
-        super(Block, self).__init__(home, road, zone)
-
 
 class Give(PlayType):
     name = 'give'
 
-    def __init__(self, home, road, zone):
-        super(Give, self).__init__(home, road, zone)
-
+    def result(self):
         giving = self.home if self.possession.has_possession == sel.road \
                            else self.road
         taking = self.road if giving == self.home else self.home
@@ -267,9 +249,7 @@ class Give(PlayType):
 class Take(PlayType):
     name = 'take'
 
-    def __init__(self, home, road, zone):
-        super(Take, self).__init__(home, road, zone)
-
+    def result(self):
         taking = self.home if self.possession.has_possession == self.road \
                            else self.road
         giving = self.road if taking == self.home else self.home
@@ -283,9 +263,7 @@ class Take(PlayType):
 class Hit(PlayType):
     name = 'hit'
 
-    def __init__(self, home, road, zone):
-        super(Hit, self).__init__(home, road, zone)
-
+    def result(self):
         hitter = self.road if self.possession.has_possession == self.home \
                            else self.home
         hittee = self.home if hitter == self.road else self.road

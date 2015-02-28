@@ -1,6 +1,9 @@
+
+from nose.tools import *
+
 from hockeyage.game.clock import Clock
 from hockeyage.game.event import Event
-from nose.tools import *
+from hockeyage.game.match import Period
 
 
 def test_init():
@@ -10,7 +13,8 @@ def test_init():
 
 def test_add():
     event = Event()
-    clock = Clock()
+    period = Period()
+    clock = Clock(period)
     event.add(1, clock, 'face', 'NEUTRAL')
     assert_equal(1, event.event)
     assert_true(len(event.events) == 1)

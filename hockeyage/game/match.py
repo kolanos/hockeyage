@@ -106,7 +106,7 @@ class Possession(object):
         self.has_puck = player
 
         if not self.has_puck:
-            self.has_puck = self.possession.lines.weighted_vhoice()
+            self.has_puck = self.has_possession.lines.weighted_choice()
 
     def loose_puck(self):
         self.has_possession = None
